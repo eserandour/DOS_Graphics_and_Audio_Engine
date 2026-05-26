@@ -8,11 +8,12 @@
    Rien n'est visible à l'écran tant que flip() n'est pas
    appelé (voir video.h).
 
-   Pas de clipping sur putPixel/drawLine pour des raisons
-   de performance, sauf sur drawCircle/drawCircleFill où
-   le clipping est intégré car l'algorithme sort naturellement
-   des bornes. Veiller à ne pas dessiner hors de l'écran
-   avec les autres primitives.
+   Clipping : putPixel vérifie les bornes et ignore silencieusement
+   les coordonnées hors écran. drawCircle et drawCircleFill ont
+   aussi un clipping intégré. En revanche drawLine, drawRect,
+   drawPolygon et drawPolygonFill n'ont pas de clipping : veiller
+   à rester dans les bornes (0..319 en X, 0..199 en Y) lorsqu'on
+   les appelle.
    ========================================================= */
 
 /* ---------------------------------------------------------
@@ -30,7 +31,9 @@ void clearScreen(unsigned char color);
    --------------------------------------------------------- */
 
 /* Écrit un pixel dans le backbuffer à la position (x, y).
-   Pas de vérification de bornes pour la performance.
+   Vérification de bornes intégrée : les coordonnées hors écran
+   sont ignorées silencieusement (pas de crash, pas d'écriture
+   hors du backbuffer).
    color : index de palette (0-255). */
 void putPixel(int x, int y, unsigned char color);
 
