@@ -152,7 +152,8 @@ void cyclePaletteLeft(Color *pal, int start, int end)
 
 /* Décale toutes les couleurs d'un cran vers la droite.
    Sauvegarde pal[end], décale pal[start..end-1] d'un
-   cran, remet la sauvegarde en pal[start].
+   cran vers la droite (chaque entrée prend la valeur de
+   son voisin de gauche), puis remet la sauvegarde en pal[start].
    Effet visuel : les couleurs "tournent" vers la droite. */
 void cyclePaletteRight(Color *pal, int start, int end)
 {
