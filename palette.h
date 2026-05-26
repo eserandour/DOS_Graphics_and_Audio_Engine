@@ -100,8 +100,9 @@ void fadePalette(Color *pal, float t);
 void cyclePaletteLeft(Color *pal, int start, int end);
 
 /* Décale toutes les couleurs d'un cran vers la droite dans
-   l'intervalle [start, end]. La couleur end est perdue,
-   la couleur start reçoit l'ancienne valeur de end.
+   l'intervalle [start, end]. La couleur end est sauvegardée,
+   chaque entrée reçoit la valeur de son voisin de gauche, puis
+   la sauvegarde est replacée en start.
    Crée un effet de défilement des couleurs vers la droite. */
 void cyclePaletteRight(Color *pal, int start, int end);
 
