@@ -35,7 +35,7 @@ projet/
 +-- CLEANALL.BAT
 |
 +-- OUTILS
-    +-- fonteditor.htm et .js  (pour creer ses propres polices de caracteres 8x8 et 16x16)
+    +-- fonteditor.htm         (pour creer ses propres polices de caracteres 8x8, 8x16 et 16x16)
     +-- psf2c.py               (extrait une police Linux PSF1/PSF2 en .c et .png)
     +-- img2vga.py             (produit les fichiers *.pal et *.raw)
     +-- pal2img.py             (produit une image en .png de la palette d'un fichier en .pal)
