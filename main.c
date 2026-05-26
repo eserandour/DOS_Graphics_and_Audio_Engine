@@ -24,7 +24,7 @@
 #include "timer.h"    /* installTimer, restoreTimer        */
 #include "video.h"    /* initBackbuffer, setVideoMode, etc */
 #include "palette.h"  /* getPalette, generatePinkPalette   */
-#include "font.h"     /* initBiosFont, initMyFont*             */
+#include "font1.h"     /* font1InitBios, font1Init*()             */
 #include "scene.h"    /* setScene, runCurrentScene         */
 
 /* =========================================================
@@ -72,11 +72,14 @@ int main(void)
        À partir de là, plus d'affichage texte possible. */
     setVideoMode(0x13);
 
-    /* Initialiser les polices. biosFont pointe vers la ROM,
-       myFont* allouent leurs glyphes dans leurs FontBank. */
-    initBiosFont();
-    initMyFont8x8();
-    initMyFont16x16();
+    /* Initialiser les polices.
+       font1InitBios() lit l'adresse fixe de la table ROM 8x8
+       du BIOS. font1InitBank*() allouent chacune une Font1Bank
+       en mémoire far et chargent leurs glyphes depuis font1dat.c. */
+    font1InitBios();
+    font1InitBank8x8();
+    font1InitBank8x16();
+    font1InitBank16x16();
 
     /* Lire la palette VGA actuelle (définie par le BIOS).
        Elle sera utilisée dans scene1 comme palette
