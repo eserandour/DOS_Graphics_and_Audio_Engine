@@ -1,15 +1,22 @@
 /* =========================================================
-   SCENE4.C — Affiche HELLO au centre de l'ecran
+   SCENE4.C — Affiche HELLO et WORLD avec font2 (mode disque)
+   =========================================================
+   Charge la palette font.pal puis affiche :
+     - "HELLO" centre horizontalement a y=84
+     - "WORLD" en (0, 100) pour illustrer le positionnement
+       libre (non centre) de font2DiskDrawText.
+
+   Vide le buffer clavier a l'entree (pour absorber la touche
+   qui a declenche la fin de scene3), attend une nouvelle
+   touche, puis passe a SCENE_5.
    ========================================================= */
 
-#include <stdlib.h>   /* exit                              */
-#include "video.h"    /* flip                              */
-#include "graphics.h" /* clearScreen                       */
-#include "image.h"    /* loadImagePal, IMG_OK              */
-#include "font2.h"    /* drawTextCentered2                 */
-#include "scene.h"    /* setScene, SCENE_4                 */
-
-void shutdown(void);
+#include <conio.h>
+#include "video.h"
+#include "graphics.h"
+#include "image.h"
+#include "font2.h"
+#include "scene.h"
 
 void scene4(void)
 {
@@ -20,13 +27,26 @@ void scene4(void)
         int err;
 
         err = loadImagePal("images\\font.pal");
-        if (err != IMG_OK) { shutdown(); exit(1); }
+        if (err != IMG_OK) { setScene(SCENE_1); return; }
 
-        clearScreen(0);                          /* fond jaune-vert  */
-        drawTextCentered2("HELLO", 84, 127);     /* index 127 = transparent */
-        drawText2("WORLD", 0,0,-1);     /* index -1 = opaque */
+        clearScreen(0);
+        font2DiskDrawTextCentered("HELLO", 84, FONT2_BG);
+        font2DiskDrawText("WORLD", 0, 120, FONT2_BG);
         flip();
 
+        /* Vider le buffer clavier : la touche qui a declenche
+           la fin de scene3 ne doit pas passer en scene4. */
+        while (kbhit()) getch();
+
         initialized = 1;
+    }
+
+    if (kbhit())
+    {
+        getch();
+        /* Vider a nouveau avant de passer a scene5. */
+        while (kbhit()) getch();
+        initialized = 0;
+        setScene(SCENE_5);
     }
 }
