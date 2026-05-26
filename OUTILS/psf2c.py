@@ -71,7 +71,7 @@ def _read_psf2(data):
 
     return chars, char_width, char_height
 
-def generate_c_array(chars, char_width, char_height, array_name="myFont"):
+def generate_c_array(chars, char_width, char_height, array_name="font1Bank"):
     bytes_per_row = (char_width + 7) // 8   # nb d'octets par ligne de pixels
 
     # Glyphes graphiques DOS (CP437) pour les codes de contrôle 0x00-0x1F et 0x7F
@@ -108,7 +108,7 @@ def generate_c_array(chars, char_width, char_height, array_name="myFont"):
     raw_lines = []
     for i, char_data in enumerate(chars):
         hex_bytes = [f"0x{b:02x}" for b in char_data]
-        raw = f"    defineChar{char_width}x{char_height}({array_name}, {i:{num_width}}, {', '.join(hex_bytes)})"
+        raw = f"    font1DefineChar{char_width}x{char_height}({array_name}, {i:{num_width}}, {', '.join(hex_bytes)})"
         raw_lines.append(raw)
 
     max_len = max(len(r) for r in raw_lines)
@@ -210,7 +210,7 @@ def process_file(font_file):
 
     chars, char_width, char_height, psf_version = read_psf(font_file)
 
-    array_name = f"myFont{char_width}x{char_height}"
+    array_name = f"font1Bank{char_width}x{char_height}"
     c_code = generate_c_array(chars, char_width, char_height, array_name)
     with open(c_file, "w") as f:
         f.write(c_code + "\n")
