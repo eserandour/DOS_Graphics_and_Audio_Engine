@@ -2,24 +2,15 @@
 #define SCENE_H
 
 /* =========================================================
-   SCENE.H — Gestionnaire de scènes
-   =========================================================
-   Une scène est une fonction autonome appelée en boucle
-   par main(). Elle gère son propre état interne via des
-   variables statiques et peut décider de passer à la
-   scène suivante via setScene().
-
-   Pour ajouter une scène :
-   1. Ajouter une valeur dans l'enum Scene.
-   2. Écrire la fonction dans scenes/<nom>.c.
-   3. L'ajouter dans le tableau scenes[] de scene.c.
+   SCENE.H — Gestionnaire de scenes
    ========================================================= */
 
 typedef enum {
-    SCENE_1 = 0,   /* pixels aléatoires (LCG)   */
-    SCENE_2 = 1,   /* démonstration palette VGA */
-    SCENE_3 = 2,   /* démonstration des polices */
-    SCENE_4 = 3    /* affichage image RAW+PAL   */
+    SCENE_1 = 0,   /* pixels aleatoires (LCG)        */
+    SCENE_2 = 1,   /* demonstration palette VGA       */
+    SCENE_3 = 2,   /* demonstration des polices       */
+    SCENE_4 = 3,   /* affichage image RAW+PAL         */
+    SCENE_5 = 4    /* scrolling de texte horizontal   */
 } Scene;
 
 extern Scene currentScene;
