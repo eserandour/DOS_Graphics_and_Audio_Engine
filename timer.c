@@ -4,7 +4,7 @@
 
 #include <dos.h>    /* _disable, _enable, _dos_getvect,
                        _dos_setvect, _chain_intr            */
-#include <conio.h>  /* outp                                  */
+#include <conio.h>  /* outp                                 */
 #include "timer.h"
 
 /* ---------------------------------------------------------
