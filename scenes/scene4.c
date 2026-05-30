@@ -1,52 +1,63 @@
 /* =========================================================
-   SCENE4.C — Affiche HELLO et WORLD avec font2 (mode disque)
+   SCENE4.C — Affiche HELLO et WORLD avec font2
    =========================================================
    Charge la palette font.pal puis affiche :
      - "HELLO" centre horizontalement a y=84
-     - "WORLD" en (0, 100) pour illustrer le positionnement
-       libre (non centre) de font2DiskDrawText.
+     - "WORLD" en (0, 120) pour illustrer le positionnement
+       libre (non centre) de font2DrawText.
 
-   Vide le buffer clavier a l'entree (pour absorber la touche
-   qui a declenche la fin de scene3), attend une nouvelle
-   touche, puis passe a SCENE_5.
+   Duree : 3 secondes, puis passage automatique a SCENE_5
+   (cut). Echap gere globalement par le handler INT 09h.
    ========================================================= */
 
-#include <conio.h>
+#include "timer.h"
 #include "video.h"
 #include "graphics.h"
 #include "image.h"
 #include "font2.h"
 #include "scene.h"
+#include "trans.h"
+#include "app.h"
+
+/* Descripteur global (init statique au niveau fichier = OK pour Watcom) */
+static Font2Desc s4_font = FONT2_DESC_DEFAULT;
 
 void scene4(void)
 {
-    static int initialized = 0;
+    static int           initialized = 0;
+    static unsigned long knownStart  = 0;
+
+    const unsigned long scene_ms = 3000UL;
+    unsigned long now = readTimer();
+
+    if (initialized && sceneStart != knownStart)
+        initialized = 0;
 
     if (!initialized)
     {
         int err;
 
         err = loadImagePal("images\\font.pal");
-        if (err != IMG_OK) { setScene(SCENE_1); return; }
+        if (err != IMG_OK) { quitRequested = 1; return; }
+
+        if (!font2Load(&s4_font)) { quitRequested = 1; return; }
 
         clearScreen(0);
-        font2DiskDrawTextCentered("HELLO", 84, FONT2_BG);
-        font2DiskDrawText("WORLD", 0, 120, FONT2_BG);
+        font2DrawTextCentered(&s4_font, "HELLO", 84);
+        font2DrawText(&s4_font, "WORLD", 0, 120);
         flip();
 
-        /* Vider le buffer clavier : la touche qui a declenche
-           la fin de scene3 ne doit pas passer en scene4. */
-        while (kbhit()) getch();
-
+        knownStart  = sceneStart;
         initialized = 1;
     }
 
-    if (kbhit())
+    if (elapsedTimeMs(sceneStart, now) >= scene_ms)
     {
-        getch();
-        /* Vider a nouveau avant de passer a scene5. */
-        while (kbhit()) getch();
-        initialized = 0;
-        setScene(SCENE_5);
+        if (!transitionPending())
+        {
+            font2Free(&s4_font);
+            initialized = 0;
+            transitionRequest(SCENE_5, TRANS_CUT, 0UL);
+        }
     }
 }
