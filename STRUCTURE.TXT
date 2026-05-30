@@ -1,6 +1,8 @@
 projet/
 +-- main.c
-+-- timer.h / timer.c
++-- app.h                      flags globaux de l'application (quitRequested)
++-- timer.h / timer.c          timer haute résolution (INT 08h, PIT à 70 Hz)
++-- keyboard.h / keyboard.c    handler clavier (INT 09h) : Échap → quitRequested
 +-- video.h / video.c
 +-- palette.h / palette.c
 +-- graphics.h / graphics.c
@@ -10,24 +12,30 @@ projet/
 |                                loadScreenRaw, drawImage, drawScreen
 +-- font1.h / font1.c          moteur texte bitmap (BIOS ROM + Font1Bank)
 +-- font1dat.h / font1dat.c    donnees des glyphes personnels 8x8 et 16x16
-+-- font2.h / font2.c          texte par feuille de sprites (images\font.raw)
-|                                glyphes 32x32, plage 0x20-0x5B
-|                                mode disque : font2DiskDrawChar / font2DiskDrawText / font2DiskDrawTextCentered
-|                                mode RAM    : font2RamLoad / font2RamDrawChar / font2RamDrawText / font2RamFree
-+-- scene.h / scene.c
++-- font2.h / font2.c          texte par feuille de sprites (.raw)
+|                                police décrite par Font2Desc (fichier, dimensions,
+|                                plage de caractères, colorKey)
+|                                polices prédéfinies : FONT2_DESC_DEFAULT (font.raw 32x32)
+|                                                      FONT2_DESC_045_32  (045_32.raw 32x32)
+|                                API : font2Load / font2Free / font2IsLoaded
+|                                      font2DrawChar / font2DrawText / font2DrawTextCentered
+|                                      font2GetPixel
++-- scene.h / scene.c          gestionnaire de scènes + flag quitRequested
++-- trans.h / trans.c          moteur de transitions (TRANS_CUT, TRANS_FADE, TRANS_FADEPAL, TRANS_WIPE_L/R)
 +-- scenes/
-|   +-- scene1.c    pixels aleatoires LCG, 5s
-|   +-- scene2.c    demonstration palette : cycle, lerp
-|   +-- scene3.c    demonstration polices : BIOS 8x8, custom 8x8, 16x16
-|   +-- scene4.c    image font2 : HELLO WORLD, attente touche
-|   +-- scene5.c    scrolling de texte horizontal (credits)
-|                     feuille font2 prchargee en RAM far (_fmalloc)
+|   +-- scene1.c    pixels aléatoires LCG, 5s, puis SCENE_2 (cut)
+|   +-- scene2.c    démonstration palette : statique, cycle droite/gauche, puis SCENE_3 (cut)
+|   +-- scene3.c    démonstration polices : BIOS 8x8, custom 8x8, 8x16, 16x16 — touche pour avancer
+|   +-- scene4.c    image font2 : HELLO WORLD, 3s, puis SCENE_5 (cut)
+|   +-- scene5.c    scrolling de texte horizontal (crédits)
+|                     feuille font2 préchargée en RAM far (_fmalloc)
 |                     blit colonne par colonne depuis le buffer RAM
 |                     vitesse : SCROLL_SPEED_MS (ms/pixel)
 |                     boucle infinie, touche pour revenir en SCENE_1
 +-- images/
-|   +-- font.pal / font.raw    feuille de sprites 320x192 pour font2
-|   +-- *.pal / *.raw
+|   +-- font.raw / font.pal          feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
+|   +-- 045_32.raw / 045_32.pal      feuille de sprites 320x192, glyphes 32x32, 0x2D-0x68
+|   +-- *.raw / *.pal
 |
 +-- BUILD.BAT
 +-- LINK.RSP
@@ -35,7 +43,8 @@ projet/
 +-- CLEANALL.BAT
 |
 +-- OUTILS
-    +-- fonteditor.htm         (pour creer ses propres polices de caracteres 8x8, 8x16 et 16x16)
-    +-- psf2c.py               (extrait une police Linux PSF1/PSF2 en .c et .png)
-    +-- img2vga.py             (produit les fichiers *.pal et *.raw)
-    +-- pal2img.py             (produit une image en .png de la palette d'un fichier en .pal)
+    +-- fonteditor.htm  (pour créer ses propres polices de caractères 8x8, 8x16 et 16x16)
+    +-- psf2c.py        (extrait une police Linux PSF1/PSF2 en .c et .png)
+    +-- vgatool.py      (convert : produit .raw + .pal + _palette.png en une passe)
+    |                   (palette : visualise un fichier .pal existant en .png)
+    |                   (couleurs palette PNG fidèles au rendu VGA 6 bits)
