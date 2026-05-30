@@ -7,46 +7,37 @@
    ATTENTION — arithmetique 16 bits
    ---------------------------------
    Sur DOS, int est 16 bits signes (max 32767).
-   FONT2_SHEET_SIZE = 320 * 192 = 61440 depasse cette limite.
-   Toutes les tailles et offsets utilisant cette valeur
-   doivent etre declares en unsigned long (suffixe UL).
+   Toutes les tailles et offsets sont calcules en unsigned long
+   pour eviter les debordements (ex: 320*192 = 61440 > 32767).
 
-   MODE DISQUE  font2DiskDrawText / font2DiskDrawTextCentered
-     Une ouverture de fichier par glyphe via
-     loadImageZoneRawKey(). Simple, adapte au texte statique.
-
-   MODE RAM     font2RamLoad / font2RamDrawChar / font2RamDrawText /
-                font2RamDrawTextCentered / font2RamGetPixel / font2RamFree
-     Charge toute la feuille en RAM far une seule fois.
-     Lecture ligne par ligne (FONT2_SHEET_W octets) pour
-     eviter le probleme de fread > 32767 octets en une passe.
-     Blit direct depuis le buffer : zero acces disque.
+   Charge toute la feuille en RAM far une seule fois via font2Load().
+   Lecture ligne par ligne (sheet_w octets par appel) pour
+   eviter le probleme de fread > 32767 octets en une passe.
+   Blit direct depuis le buffer : zero acces disque pendant le rendu.
    ========================================================= */
 
 #include <malloc.h>   /* _fmalloc, _ffree                   */
 #include <stdio.h>    /* FILE, fopen, fread, fclose          */
 #include <string.h>   /* _fmemcpy                           */
-#include "video.h"    /* backbuffer, SCREEN_WIDTH, OFFSET    */
-#include "image.h"    /* loadImageZoneRawKey                 */
+#include "video.h"    /* backbuffer, SCREEN_WIDTH, OFFSET   */
 #include "font2.h"
-
-#define FONT2_RAW  "images\\font.raw"
-
-/* Buffer RAM : NULL si non charge. */
-static unsigned char far *font2Sheet = NULL;
 
 
 /* =========================================================
    UTILITAIRES INTERNES
    ========================================================= */
 
-static int glyphPos(unsigned char c, int *outSrcX, int *outSrcY)
+/* Calcule la position (srcX, srcY) du glyphe c dans la feuille.
+   Retourne 1 si le caractere est dans la plage, 0 sinon.     */
+static int glyphPos(const Font2Desc *fd, unsigned char c,
+                    int *outSrcX, int *outSrcY)
 {
     int idx;
-    if (c < FONT2_FIRST_CHAR || c > FONT2_LAST_CHAR) return 0;
-    idx      = c - FONT2_FIRST_CHAR;
-    *outSrcX = (idx % FONT2_COLS) * FONT2_CHAR_W;
-    *outSrcY = (idx / FONT2_COLS) * FONT2_CHAR_H;
+    if (c < (unsigned char)fd->first_char ||
+        c > (unsigned char)fd->last_char) return 0;
+    idx      = c - (unsigned char)fd->first_char;
+    *outSrcX = (idx % fd->cols) * fd->char_w;
+    *outSrcY = (idx / fd->cols) * fd->char_h;
     return 1;
 }
 
@@ -57,144 +48,112 @@ static int f2strlen(const char *s)
 
 
 /* =========================================================
-   MODE DISQUE
-   ========================================================= */
-
-void font2DiskDrawChar(unsigned char c, int x, int y, int colorKey)
-{
-    int srcX, srcY;
-    if (!glyphPos(c, &srcX, &srcY)) return;
-    loadImageZoneRawKey(FONT2_RAW, FONT2_SHEET_W,
-                        srcX, srcY,
-                        FONT2_CHAR_W, FONT2_CHAR_H,
-                        x, y,
-                        colorKey);
-}
-
-void font2DiskDrawText(const char *text, int x, int y, int colorKey)
-{
-    int i;
-    for (i = 0; text[i] != '\0'; i++)
-        font2DiskDrawChar((unsigned char)text[i],
-                          x + i * FONT2_CHAR_W, y, colorKey);
-}
-
-void font2DiskDrawTextCentered(const char *text, int y, int colorKey)
-{
-    int x = (SCREEN_WIDTH - f2strlen(text) * FONT2_CHAR_W) / 2;
-    if (x < 0) x = 0;
-    font2DiskDrawText(text, x, y, colorKey);
-}
-
-
-/* =========================================================
-   MODE RAM — Gestion du buffer
+   GESTION DU BUFFER
    =========================================================
-   La feuille fait FONT2_SHEET_W * FONT2_SHEET_H = 61440
-   octets. Cette valeur depasse int 16 bits (max 32767),
-   donc on utilise unsigned long partout.
-
-   fread() sur DOS : le parametre count est size_t (16 bits),
-   donc on ne peut pas lire 61440 octets en un seul appel
-   (61440 > 65535 ? non, mais le comportement varie selon
-   le runtime). On lit ligne par ligne (FONT2_SHEET_W octets
-   par appel = 320 octets, sans risque) pour garantir la
-   compatibilite avec tous les runtimes DOS.
+   Lecture ligne par ligne pour contourner la limite size_t
+   16 bits de fread() sous DOS.
    ========================================================= */
 
-int font2RamLoad(void)
+int font2Load(Font2Desc *fd)
 {
     FILE *f;
     unsigned long row;
+    unsigned long sheet_size;
     unsigned char far *dst;
 
-    if (font2Sheet) return 1;   /* deja en RAM */
+    if (fd->sheet) return 1;   /* deja en RAM */
 
-    /* _fmalloc prend un unsigned long sur Watcom large model. */
-    font2Sheet = (unsigned char far *)_fmalloc(FONT2_SHEET_SIZE);
-    if (!font2Sheet) return 0;
+    sheet_size = (unsigned long)fd->sheet_w * (unsigned long)fd->sheet_h;
 
-    f = fopen(FONT2_RAW, "rb");
-    if (!f) { _ffree(font2Sheet); font2Sheet = NULL; return 0; }
+    /* _fmalloc prend unsigned long sur Watcom large model. */
+    fd->sheet = (unsigned char far *)_fmalloc(sheet_size);
+    if (!fd->sheet) return 0;
 
-    dst = font2Sheet;
-    for (row = 0; row < FONT2_SHEET_H; row++)
+    f = fopen(fd->path, "rb");
+    if (!f) { _ffree(fd->sheet); fd->sheet = NULL; return 0; }
+
+    dst = fd->sheet;
+    for (row = 0; row < (unsigned long)fd->sheet_h; row++)
     {
-        /* Lire une ligne de FONT2_SHEET_W octets (320 < 32767). */
-        if (fread(dst, 1, FONT2_SHEET_W, f) != FONT2_SHEET_W)
+        if (fread(dst, 1, (unsigned)fd->sheet_w, f)
+                != (unsigned)fd->sheet_w)
         {
             fclose(f);
-            _ffree(font2Sheet);
-            font2Sheet = NULL;
+            _ffree(fd->sheet);
+            fd->sheet = NULL;
             return 0;
         }
-        dst += FONT2_SHEET_W;
+        dst += fd->sheet_w;
     }
 
     fclose(f);
     return 1;
 }
 
-void font2RamFree(void)
+void font2Free(Font2Desc *fd)
 {
-    if (font2Sheet) { _ffree(font2Sheet); font2Sheet = NULL; }
+    if (fd->sheet) { _ffree(fd->sheet); fd->sheet = NULL; }
 }
 
-int font2RamIsLoaded(void)
+int font2IsLoaded(const Font2Desc *fd)
 {
-    return font2Sheet != NULL;
+    return fd->sheet != NULL;
 }
 
 
 /* =========================================================
-   MODE RAM — Rendu
+   RENDU
    ========================================================= */
 
-void font2RamDrawChar(unsigned char c, int x, int y, int colorKey)
+void font2DrawChar(Font2Desc *fd, unsigned char c,
+                   int x, int y)
 {
     int srcX, srcY, row, col;
     unsigned char far *dst;
     unsigned char pix;
     unsigned char ck;
 
-    if (!glyphPos(c, &srcX, &srcY)) return;
+    if (!glyphPos(fd, c, &srcX, &srcY)) return;
 
-    ck  = (unsigned char)colorKey;
+    ck  = (unsigned char)fd->colorKey;
     dst = backbuffer + OFFSET(x, y);
 
-    for (row = 0; row < FONT2_CHAR_H; row++)
+    for (row = 0; row < fd->char_h; row++)
     {
-        for (col = 0; col < FONT2_CHAR_W; col++)
+        for (col = 0; col < fd->char_w; col++)
         {
-            /* Offset dans la feuille : calcul en unsigned long
-               pour eviter le debordement 16 bits. */
-            pix = font2Sheet[(unsigned long)(srcY + row)
-                             * FONT2_SHEET_W + (srcX + col)];
-            if (colorKey < 0 || pix != ck)
+            /* Offset unsigned long obligatoire pour eviter
+               le debordement 16 bits.                     */
+            pix = fd->sheet[
+                (unsigned long)(srcY + row) * fd->sheet_w
+                + (srcX + col)];
+            if (fd->colorKey < 0 || pix != ck)
                 dst[col] = pix;
         }
         dst += SCREEN_WIDTH;
     }
 }
 
-void font2RamDrawText(const char *text, int x, int y, int colorKey)
+void font2DrawText(Font2Desc *fd, const char *text,
+                   int x, int y)
 {
     int i;
     for (i = 0; text[i] != '\0'; i++)
-        font2RamDrawChar((unsigned char)text[i],
-                      x + i * FONT2_CHAR_W, y, colorKey);
+        font2DrawChar(fd, (unsigned char)text[i],
+                      x + i * fd->char_w, y);
 }
 
-void font2RamDrawTextCentered(const char *text, int y, int colorKey)
+void font2DrawTextCentered(Font2Desc *fd, const char *text,
+                           int y)
 {
-    int x = (SCREEN_WIDTH - f2strlen(text) * FONT2_CHAR_W) / 2;
+    int x = (SCREEN_WIDTH - f2strlen(text) * fd->char_w) / 2;
     if (x < 0) x = 0;
-    font2RamDrawText(text, x, y, colorKey);
+    font2DrawText(fd, text, x, y);
 }
 
-unsigned char font2RamGetPixel(int sx, int sy)
+unsigned char font2GetPixel(const Font2Desc *fd,
+                             int sx, int sy)
 {
-    /* Offset unsigned long obligatoire : sy * 320 peut
-       depasser 32767 des la ligne 103. */
-    return font2Sheet[(unsigned long)sy * FONT2_SHEET_W + sx];
+    return fd->sheet[
+        (unsigned long)sy * fd->sheet_w + sx];
 }
