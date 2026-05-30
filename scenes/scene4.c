@@ -37,7 +37,7 @@ void scene4(void)
     {
         int err;
 
-        err = loadImagePal("images\\font.pal");
+        err = loadImagePal("images\\font2\\font.pal");
         if (err != IMG_OK) { quitRequested = 1; return; }
 
         if (!font2Load(&s4_font)) { quitRequested = 1; return; }

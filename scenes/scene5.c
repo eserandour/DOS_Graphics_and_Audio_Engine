@@ -123,7 +123,7 @@ void scene5(void)
     {
         int err;
 
-        err = loadImagePal("images\\16X16_F2.pal");
+        err = loadImagePal("images\\font2\\16X16_F2.pal");
         if (err != IMG_OK) { quitRequested = 1; return; }
 
         if (!font2Load(&scrollFont)) { quitRequested = 1; return; }
