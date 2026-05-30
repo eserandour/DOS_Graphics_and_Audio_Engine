@@ -33,8 +33,9 @@ projet/
 |                     vitesse : SCROLL_SPEED_MS (ms/pixel)
 |                     boucle infinie, touche pour revenir en SCENE_1
 +-- images/
-|   +-- font.raw / font.pal          feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
-|   +-- 16X16_F2.raw / 16X16_F2.pal      feuille de sprites 320x48, glyphes 16x16, 0x20-0x5B
+|   +-- font2/
+|   |   +-- font.raw / font.pal          feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
+|   |   +-- 16X16_F2.raw / 16X16_F2.pal      feuille de sprites 320x48, glyphes 16x16, 0x20-0x5B
 |   +-- *.raw / *.pal
 |
 +-- BUILD.BAT
