@@ -16,7 +16,7 @@ projet/
 |                                police décrite par Font2Desc (fichier, dimensions,
 |                                plage de caractères, colorKey)
 |                                polices prédéfinies : FONT2_DESC_DEFAULT (font.raw 32x32)
-|                                                      FONT2_DESC_16X16_F2  (16X16_F2.raw 32x32)
+|                                                      FONT2_DESC_16X16_F2  (16X16_F2.raw 16x16)
 |                                API : font2Load / font2Free / font2IsLoaded
 |                                      font2DrawChar / font2DrawText / font2DrawTextCentered
 |                                      font2GetPixel
@@ -34,7 +34,7 @@ projet/
 |                     boucle infinie, touche pour revenir en SCENE_1
 +-- images/
 |   +-- font.raw / font.pal          feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
-|   +-- 16X16_F2.raw / 16X16_F2.pal      feuille de sprites 320x192, glyphes 32x32, 0x2D-0x68
+|   +-- 16X16_F2.raw / 16X16_F2.pal      feuille de sprites 320x48, glyphes 16x16, 0x20-0x5B
 |   +-- *.raw / *.pal
 |
 +-- BUILD.BAT
