@@ -73,11 +73,11 @@ typedef struct
 
 /* font.raw : grille 320x192, glyphes 32x32, 0x20..0x5B, bg=127 */
 #define FONT2_DESC_DEFAULT \
-    { "images\\font.raw", 320, 192, 32, 32, 10, 0x20, 0x5B, 127, 0 }
+    { "images\\font2\\font.raw", 320, 192, 32, 32, 10, 0x20, 0x5B, 127, 0 }
 
 /* 16X16_F2.raw : grille 320x48, glyphes 16x16, 0x20..0x5B, bg=5 */
 #define FONT2_DESC_16X16_F2 \
-    { "images\\16X16_F2.raw", 320, 48, 16, 16, 20, 0x20, 0x5B, 5, 0 }
+    { "images\\font2\\16X16_F2.raw", 320, 48, 16, 16, 20, 0x20, 0x5B, 5, 0 }
 
 
 /* =========================================================
