@@ -31,6 +31,13 @@ projet/
 |                     blit colonne par colonne depuis le buffer RAM
 |                     vitesse : SCROLL_SPEED_MS (ms/pixel)
 |                     boucle infinie, touche pour revenir en SCENE_1
+|   +-- scene6.c    rotozoom sur freedos.raw (256x256)
+|                     texture chargée en far heap (65536 o)
+|                     table sinus 512 entrées en far heap (2048 o)
+|                     arithmétique virgule fixe 16.16 (pas de FPU)
+|                     zoom oscillant (×0.6..×2.4, cycle 4s)
+|                     rotation continue + fade-out palette en fin de scène
++-- freedos.raw / freedos.pal           texture rotozoom 256x256, palette VGA 6 bits
 +-- images/
 |   +-- font2/
 |   |   +-- font.raw / font.pal          feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
