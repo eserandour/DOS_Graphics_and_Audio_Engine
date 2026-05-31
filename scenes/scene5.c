@@ -28,7 +28,6 @@
 #include "graphics.h"
 #include "font2.h"
 #include "scene.h"
-#include "trans.h"
 #include "app.h"
 
 /* =========================================================
@@ -162,7 +161,7 @@ void scene5(void)
     {
         font2Free(&scrollFont);
         initialized = 0;
-        transitionRequest(SCENE_1, TRANS_CUT, 0UL);
+        sceneSignalEnd();
         return;
     }
 

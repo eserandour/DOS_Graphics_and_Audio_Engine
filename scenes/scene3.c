@@ -18,7 +18,6 @@
 #include "graphics.h"
 #include "font1.h"
 #include "scene.h"
-#include "trans.h"
 
 #define NB_SCREENS  6
 #define SCREEN_MS   3000UL
@@ -115,7 +114,13 @@ void scene3(void)
         screen      = 0;
         screenStart = now;
         initialized = 1;
+        
+        font1InitBios();
+        font1InitBank8x8();
+        font1InitBank8x16();
+        font1InitBank16x16();
 
+        generatePinkPalette(pinkPalette);
         copyPalette(workingPalette, pinkPalette);
         setPalette(workingPalette);
         drawScreen(screen);
@@ -129,7 +134,15 @@ void scene3(void)
         {
             screen      = 0;
             initialized = 0;
-            transitionRequest(SCENE_4, TRANS_CUT, 0UL);
+            /* Libere les Font1Bank avant scene6 pour eviter
+               la fragmentation du heap far :
+               font2 (15 Ko) + font1 banks (~14 Ko) liberes
+               en sequence avant le _fmalloc(65536) de scene6. */
+            font1FreeBank(&font1Bank8x8);
+            font1FreeBank(&font1Bank8x16);
+            font1FreeBank(&font1Bank16x16);
+            
+            sceneSignalEnd();
             return;
         }
 

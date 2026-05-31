@@ -9,7 +9,6 @@
 #include "video.h"
 #include "palette.h"
 #include "scene.h"
-#include "trans.h"
 
 void scene1(void)
 {
@@ -59,9 +58,6 @@ void scene1(void)
 
     if (elapsedTimeMs(sceneStart, now) > scene_ms)
     {
-        if (!transitionPending())
-        {
-            transitionRequest(SCENE_2, TRANS_CUT, 0UL);
-        }
+        sceneSignalEnd();
     }
 }

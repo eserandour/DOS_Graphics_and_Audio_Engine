@@ -16,7 +16,6 @@
 #include "image.h"
 #include "font2.h"
 #include "scene.h"
-#include "trans.h"
 #include "app.h"
 
 /* Descripteur global (init statique au niveau fichier = OK pour Watcom) */
@@ -53,11 +52,8 @@ void scene4(void)
 
     if (elapsedTimeMs(sceneStart, now) >= scene_ms)
     {
-        if (!transitionPending())
-        {
-            font2Free(&s4_font);
-            initialized = 0;
-            transitionRequest(SCENE_5, TRANS_CUT, 0UL);
-        }
+        font2Free(&s4_font);
+        initialized = 0;
+        sceneSignalEnd();
     }
 }
