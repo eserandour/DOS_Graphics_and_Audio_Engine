@@ -13,6 +13,7 @@ void scene5(void);
 
 Scene currentScene = SCENE_1;
 unsigned long sceneStart = 0;
+SceneEndHandler onSceneEnd = 0;   /* NULL par défaut — à brancher dans main.c */
 
 typedef void (*SceneFunc)(void);
 
@@ -33,4 +34,10 @@ void setScene(Scene s)
 void runCurrentScene(void)
 {
     scenes[currentScene]();
+}
+
+void sceneSignalEnd(void)
+{
+    if (onSceneEnd)
+        onSceneEnd(currentScene);
 }

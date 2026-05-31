@@ -21,7 +21,6 @@ projet/
 |                                      font2DrawChar / font2DrawText / font2DrawTextCentered
 |                                      font2GetPixel
 +-- scene.h / scene.c          gestionnaire de scènes + flag quitRequested
-+-- trans.h / trans.c          moteur de transitions (TRANS_CUT, TRANS_FADE, TRANS_FADEPAL, TRANS_WIPE_L/R)
 +-- scenes/
 |   +-- scene1.c    pixels aléatoires LCG, 5s, puis SCENE_2 (cut)
 |   +-- scene2.c    démonstration palette : statique, cycle droite/gauche, puis SCENE_3 (cut)

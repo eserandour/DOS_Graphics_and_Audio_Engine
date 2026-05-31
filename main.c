@@ -18,7 +18,6 @@
 #include "palette.h"
 #include "font1.h"
 #include "scene.h"
-#include "trans.h"
 
 void shutdown(void)
 {
@@ -26,6 +25,45 @@ void shutdown(void)
     restoreTimer();
     setVideoMode(0x03);
     freeBackbuffer();
+}
+
+/* =========================================================
+   ORCHESTRATEUR — playlist de scènes
+   =========================================================
+   Pour modifier l'ordre ou répéter une scène, il suffit
+   d'éditer ce tableau. Les scènes appellent sceneSignalEnd()
+   sans savoir ce qui les suit.
+   ========================================================= */
+
+static const Scene playlist[] = {
+    SCENE_1,
+    SCENE_2,
+    SCENE_3,
+    SCENE_4,
+    SCENE_5,
+};
+#define PLAYLIST_LEN (sizeof(playlist) / sizeof(playlist[0]))
+
+static int playlistIdx = 0;
+
+/* Mettre à 0 pour que la démo s'arrête après la dernière scène. */
+#define DEMO_LOOP 1
+
+static void handleSceneEnd(Scene finished)
+{
+    (void)finished;   /* non utilisé : on suit le curseur, pas la scène */
+
+    if (playlistIdx + 1 >= (int)PLAYLIST_LEN)
+    {
+        if (!DEMO_LOOP) { quitRequested = 1; return; }
+        playlistIdx = 0;
+    }
+    else
+    {
+        playlistIdx++;
+    }
+
+    setScene(playlist[playlistIdx]);
 }
 
 int main(void)
@@ -36,25 +74,18 @@ int main(void)
         return 1;
 
     setVideoMode(0x13);
-
-    font1InitBios();
-    font1InitBank8x8();
-    font1InitBank8x16();
-    font1InitBank16x16();
-
     getPalette(defaultPalette);
-    generatePinkPalette(pinkPalette);
-
     installTimer();
     installKeyboard();
 
-    setScene(SCENE_1);
+    /* Brancher l'orchestrateur avant la première scène. */
+    onSceneEnd = handleSceneEnd;
+
+    playlistIdx = 0;
+    setScene(playlist[0]);
 
     while (!quitRequested)
-    {
-        if (!transitionUpdate())
-            runCurrentScene();
-    }
+        runCurrentScene();
 
     shutdown();
     return 0;

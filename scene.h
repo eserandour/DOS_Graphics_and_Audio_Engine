@@ -16,7 +16,18 @@ typedef enum {
 extern Scene currentScene;
 extern unsigned long sceneStart;
 
+/* Callback appelé par sceneSignalEnd() quand une scène se déclare
+   terminée. L'implémentation (ex: main.c) décide quelle scène vient
+   ensuite et avec quelle transition.
+   Signature : void handler(Scene sceneQuiVientDeFinir); */
+typedef void (*SceneEndHandler)(Scene);
+extern SceneEndHandler onSceneEnd;
+
 void setScene(Scene s);
 void runCurrentScene(void);
+
+/* Appelé par une scène pour signaler qu'elle est terminée.
+   La scène ne choisit PAS la suivante : c'est onSceneEnd qui décide. */
+void sceneSignalEnd(void);
 
 #endif /* SCENE_H */
