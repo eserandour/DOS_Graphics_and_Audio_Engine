@@ -8,7 +8,6 @@
      3 — font1Bank  8x16   (128..255)
      4 — font1Bank  16x16  (0..127)
      5 — font1Bank  16x16  (128..255)
-   Puis transition cut vers SCENE_4.
    Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 

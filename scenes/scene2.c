@@ -6,7 +6,7 @@
    2.  5 s : cycle de palette vers la droite
    3.  5 s : cycle de palette vers la gauche
    4.  3 s : lerp vers pinkPalette
-   Puis    : transition vers SCENE_3 (cut)
+   Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 
 #include "timer.h"

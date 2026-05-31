@@ -1,7 +1,8 @@
 /* =========================================================
    SCENE1.C — Scène : pixels aléatoires
    =========================================================
-   Durée totale : 5 secondes, puis passage à SCENE_2 (cut).
+   Durée totale : 5 secondes.
+   Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 
 #include <time.h>

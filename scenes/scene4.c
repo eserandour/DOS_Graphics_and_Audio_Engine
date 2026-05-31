@@ -6,8 +6,8 @@
      - "WORLD" en (0, 120) pour illustrer le positionnement
        libre (non centre) de font2DrawText.
 
-   Duree : 3 secondes, puis passage automatique a SCENE_5
-   (cut). Echap gere globalement par le handler INT 09h.
+   Duree : 3 secondes
+   Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 
 #include "timer.h"

@@ -6,7 +6,6 @@
 
    Affiche un texte long qui défile de droite à gauche,
    en utilisant font2 (font2Load / font2Free).
-   Après un tour complet du ruban, retour automatique en SCENE_1.
    Aucune gestion clavier (sauf Échap global via INT 09h).
 
    ALGORITHME PAR FRAME
