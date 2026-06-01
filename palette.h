@@ -110,9 +110,6 @@ void cyclePaletteRight(Color *pal, int start, int end);
    Fonctions — Générateurs de palette
    --------------------------------------------------------- */
 
-/* Remplit toute la palette de noir (r=g=b=0). */
-void generateBlackPalette(Color *pal);
-
 /* Génère un dégradé linéaire du noir au blanc.
    index 0 → r=g=b=0 (noir)
    index 255 → r=g=b=63 (blanc)

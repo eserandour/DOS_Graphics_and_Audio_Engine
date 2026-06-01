@@ -169,14 +169,6 @@ void cyclePaletteRight(Color *pal, int start, int end)
    GÉNÉRATEURS DE PALETTE
    ========================================================= */
 
-/* Remplit toute la palette de noir.
-   _fmemset avec far pointer (palette en mémoire normale,
-   mais _fmemset accepte aussi les near pointers en large). */
-void generateBlackPalette(Color *pal)
-{
-    _fmemset(pal, 0, 256 * sizeof(Color));
-}
-
 /* Génère un dégradé linéaire du noir au blanc.
    Les composantes VGA sont sur 6 bits (0-63).
    index / 4 = index >> 2 convertit 0-255 en 0-63. */
