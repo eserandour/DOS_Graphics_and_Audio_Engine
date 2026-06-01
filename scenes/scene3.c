@@ -6,8 +6,6 @@
      1 — font1Bank  8x8    (0..255)
      2 — font1Bank  8x16   (0..127)
      3 — font1Bank  8x16   (128..255)
-     4 — font1Bank  16x16  (0..127)
-     5 — font1Bank  16x16  (128..255)
    Fade in  non bloquant : 0 → fade_in_ms  (t : 0.0 → 1.0)
    Fade out non bloquant : (scene_ms - fade_out_ms) → scene_ms (t : 1.0 → 0.0)
    Aucune gestion clavier (sauf Échap global via INT 09h).
@@ -20,8 +18,8 @@
 #include "font1.h"
 #include "scene.h"
 
-#define NB_SCREENS  6
-#define SCREEN_MS   4000UL
+#define NB_SCREENS  4
+#define SCREEN_MS   5000UL
 
 static void drawScreen(int screen)
 {
@@ -78,25 +76,6 @@ static void drawScreen(int screen)
             }
             break;
         }
-        case 4:
-        case 5:
-        {
-            int base   = (screen - 4) * 128;
-            int startX = (SCREEN_WIDTH  - 16 * 18) / 2;
-            int startY = (SCREEN_HEIGHT -  8 * 18) / 2 + 9;
-            font1DrawTextCentered(4, screen == 4
-                ? "font1Bank 16x16 - 0..127"
-                : "font1Bank 16x16 - 128..255",
-                255, &FONT1_BIOS);
-            drawLine(4, 15, 315, 15, 100);
-            for (c = 0; c < 128; c++)
-            {
-                col = c % 16; row = c / 16;
-                font1DrawChar(startX + col * 18, startY + row * 18,
-                              (unsigned char)(base + c), 255, &FONT1_BANK_16X16);
-            }
-            break;
-        }
     }
 
     flip();
@@ -110,7 +89,7 @@ void scene3(void)
 
     const unsigned long scene_ms     = NB_SCREENS * SCREEN_MS;
     const unsigned long fade_in_ms   = 2000UL;  /* durée du fondu entrant  */
-    const unsigned long fade_out_ms  = 2000UL;  /* durée du fondu sortant  */
+    const unsigned long fade_out_ms  = 1000UL;  /* durée du fondu sortant  */
 
     unsigned long now     = readTimer();
     unsigned long elapsed = elapsedTimeMs(sceneStart, now);
@@ -121,10 +100,11 @@ void scene3(void)
         initialized = 1;
         screen      = 0;
         screenStart = now;
+        
         font1InitBios();
         font1InitBank8x8();
         font1InitBank8x16();
-        font1InitBank16x16();
+
         generatePinkPalette(pinkPalette);
         copyPalette(workingPalette, pinkPalette);
         setPalette(workingPalette);
@@ -141,14 +121,10 @@ void scene3(void)
         if (screen >= NB_SCREENS)
         {
             initialized = 0;
-            screen      = 0;
-            /* Libere les Font1Bank avant scene6 pour eviter
-               la fragmentation du heap far :
-               font2 (15 Ko) + font1 banks (~14 Ko) liberes
-               en sequence avant le _fmalloc(65536) de scene6. */
+            screen      = 0; 
+            /* Libere les Font1Bank */
             font1FreeBank(&font1Bank8x8);
             font1FreeBank(&font1Bank8x16);
-            font1FreeBank(&font1Bank16x16);
 
             sceneSignalEnd();
             return;
