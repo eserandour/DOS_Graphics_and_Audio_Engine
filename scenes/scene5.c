@@ -33,8 +33,7 @@
    TEXTE DU SCROLLER
    ========================================================= */
 #define SCROLL_TEXT \
-    "     DEMO DOS MODE 13H  *  OPEN WATCOM 1.9  *  " \
-    "VIDEO : MODE 13H 320x200 256 COULEURS          "
+    "  DEMO DOS MODE 13H  *  OPEN WATCOM 1.9  *  "
 
 /* =========================================================
    PARAMETRES
@@ -120,17 +119,15 @@ void scene5(void)
     if (!initialized)
     {
         int err;
-
+        
+        initialized = 1;
         err = loadImagePal("images\\font2\\16X16_F2.pal");
         if (err != IMG_OK) { quitRequested = 1; return; }
-
         if (!font2Load(&scrollFont)) { quitRequested = 1; return; }
-
         textLen    = f2len(scrollText);
         textY      = (SCREEN_HEIGHT - scrollFont.char_h) / 2;
         rubanW     = (long)textLen * scrollFont.char_w;
         scrollX    = 0;
-
         clearScreen(SCROLL_BG_COLOR);
         drawRectFill(0, textY - SCROLL_BAR_H - 1,
                      SCREEN_WIDTH - 1, textY - 1,
@@ -140,10 +137,7 @@ void scene5(void)
                      textY + scrollFont.char_h + SCROLL_BAR_H,
                      SCROLL_BAR_COLOR);
         flip();
-
-        lastScroll = readTimer();
-
-        initialized = 1;
+        lastScroll = readTimer(); 
         return;
     }
 
@@ -158,8 +152,8 @@ void scene5(void)
 
     if (scrollX >= rubanW)
     {
-        font2Free(&scrollFont);
         initialized = 0;
+        font2Free(&scrollFont);
         sceneSignalEnd();
         return;
     }

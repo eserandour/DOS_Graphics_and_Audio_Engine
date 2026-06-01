@@ -8,6 +8,8 @@
      3 — font1Bank  8x16   (128..255)
      4 — font1Bank  16x16  (0..127)
      5 — font1Bank  16x16  (128..255)
+   Fade in  non bloquant : 0 → fade_in_ms  (t : 0.0 → 1.0)
+   Fade out non bloquant : (scene_ms - fade_out_ms) → scene_ms (t : 1.0 → 0.0)
    Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 
@@ -19,7 +21,7 @@
 #include "scene.h"
 
 #define NB_SCREENS  6
-#define SCREEN_MS   3000UL
+#define SCREEN_MS   4000UL
 
 static void drawScreen(int screen)
 {
@@ -106,33 +108,40 @@ void scene3(void)
     static int           initialized = 0;
     static unsigned long screenStart = 0;
 
-    unsigned long now = readTimer();
+    const unsigned long scene_ms     = NB_SCREENS * SCREEN_MS;
+    const unsigned long fade_in_ms   = 2000UL;  /* durée du fondu entrant  */
+    const unsigned long fade_out_ms  = 2000UL;  /* durée du fondu sortant  */
+
+    unsigned long now     = readTimer();
+    unsigned long elapsed = elapsedTimeMs(sceneStart, now);
+    float         t;
 
     if (!initialized)
     {
+        initialized = 1;
         screen      = 0;
         screenStart = now;
-        initialized = 1;
-        
         font1InitBios();
         font1InitBank8x8();
         font1InitBank8x16();
         font1InitBank16x16();
-
         generatePinkPalette(pinkPalette);
         copyPalette(workingPalette, pinkPalette);
         setPalette(workingPalette);
         drawScreen(screen);
     }
 
+    /* -------------------------------------------------------
+       Avancement des sous-écrans
+       ------------------------------------------------------- */
     if (elapsedTimeMs(screenStart, now) >= SCREEN_MS)
     {
         screen++;
 
         if (screen >= NB_SCREENS)
         {
-            screen      = 0;
             initialized = 0;
+            screen      = 0;
             /* Libere les Font1Bank avant scene6 pour eviter
                la fragmentation du heap far :
                font2 (15 Ko) + font1 banks (~14 Ko) liberes
@@ -140,7 +149,7 @@ void scene3(void)
             font1FreeBank(&font1Bank8x8);
             font1FreeBank(&font1Bank8x16);
             font1FreeBank(&font1Bank16x16);
-            
+
             sceneSignalEnd();
             return;
         }
@@ -148,4 +157,28 @@ void scene3(void)
         drawScreen(screen);
         screenStart = now;
     }
+
+    /* -------------------------------------------------------
+       Calcul du facteur de fondu (non bloquant)
+       Basé sur elapsed total depuis sceneStart,
+       indépendamment du sous-écran courant.
+       ------------------------------------------------------- */
+    if (elapsed < fade_in_ms)
+    {
+        /* Fade in : 0 → fade_in_ms */
+        t = (float)elapsed / (float)fade_in_ms;
+    }
+    else if (elapsed >= scene_ms - fade_out_ms)
+    {
+        /* Fade out : (scene_ms - fade_out_ms) → scene_ms */
+        t = (float)(scene_ms - elapsed) / (float)fade_out_ms;
+        if (t < 0.0f) t = 0.0f;
+    }
+    else
+    {
+        /* Pleine luminosité */
+        t = 1.0f;
+    }
+
+    fadePalette(workingPalette, t);
 }

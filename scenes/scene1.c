@@ -20,26 +20,44 @@ void scene1(void)
     static unsigned long lcg_state     = 0;
 
     const unsigned long render_interval_ms = 100UL;
-    const unsigned long scene_ms           = 5000UL;
+    const unsigned long scene_ms           = 6000UL;
     const unsigned long fade_in_ms         = 1000UL;  /* durée du fondu entrant  */
-    const unsigned long fade_out_ms        = 1000UL;  /* durée du fondu sortant  */
+    const unsigned long fade_out_ms        = 3000UL;  /* durée du fondu sortant  */
 
-    unsigned long  now     = readTimer();
-    unsigned long  elapsed = elapsedTimeMs(sceneStart, now);
-    unsigned int far *dst;
-    unsigned long  i;
-    unsigned int   pixel;
-    float          t;
+    unsigned long now     = readTimer();
+    unsigned long elapsed = elapsedTimeMs(sceneStart, now);
+    unsigned int  far *dst;
+    unsigned long i;
+    unsigned int  pixel;
+    float         t;
 
     if (!initialized)
     {
+        initialized = 1;
         lastRender = now;
         lcg_state  = (unsigned long)time(NULL);
-
         copyPalette(workingPalette, defaultPalette);
         setPalette(workingPalette);
+        clearScreen(0);   
+    }
 
-        initialized = 1;
+    /* -------------------------------------------------------
+       Rendu des pixels aléatoires (inchangé)
+       ------------------------------------------------------- */
+    while (elapsedTimeMs(lastRender, now) >= render_interval_ms)
+    {
+        dst = (unsigned int far *)backbuffer;
+
+        for (i = 0; i < 32000UL; i++)
+        {
+            lcg_state = lcg_state * 1664525UL + 1013904223UL;
+            pixel     = (unsigned int)(lcg_state >> 16);
+            dst[i]    = pixel;
+        }
+
+        flip();
+
+        lastRender += (render_interval_ms * TARGET_HZ) / 1000UL;
     }
 
     /* -------------------------------------------------------
@@ -60,25 +78,6 @@ void scene1(void)
     {
         /* Pleine luminosité */
         t = 1.0f;
-    }
-
-    /* -------------------------------------------------------
-       Rendu des pixels aléatoires (inchangé)
-       ------------------------------------------------------- */
-    while (elapsedTimeMs(lastRender, now) >= render_interval_ms)
-    {
-        dst = (unsigned int far *)backbuffer;
-
-        for (i = 0; i < 32000UL; i++)
-        {
-            lcg_state = lcg_state * 1664525UL + 1013904223UL;
-            pixel     = (unsigned int)(lcg_state >> 16);
-            dst[i]    = pixel;
-        }
-
-        flip();
-
-        lastRender += (render_interval_ms * TARGET_HZ) / 1000UL;
     }
 
     /* -------------------------------------------------------

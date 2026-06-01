@@ -23,37 +23,29 @@ static Font2Desc s4_font = FONT2_DESC_DEFAULT;
 
 void scene4(void)
 {
-    static int           initialized = 0;
-    static unsigned long knownStart  = 0;
+    static int initialized = 0;
 
     const unsigned long scene_ms = 3000UL;
     unsigned long now = readTimer();
-
-    if (initialized && sceneStart != knownStart)
-        initialized = 0;
 
     if (!initialized)
     {
         int err;
 
+        initialized = 1;
         err = loadImagePal("images\\font2\\font.pal");
         if (err != IMG_OK) { quitRequested = 1; return; }
-
         if (!font2Load(&s4_font)) { quitRequested = 1; return; }
-
         clearScreen(0);
-        font2DrawTextCentered(&s4_font, "HELLO", 84);
-        font2DrawText(&s4_font, "WORLD", 0, 120);
-        flip();
-
-        knownStart  = sceneStart;
-        initialized = 1;
+        font2DrawTextCentered(&s4_font, "HELLO", 45);
+        font2DrawTextCentered(&s4_font, "WORLD", 122);
+        flip();  
     }
 
     if (elapsedTimeMs(sceneStart, now) >= scene_ms)
     {
-        font2Free(&s4_font);
         initialized = 0;
+        font2Free(&s4_font);
         sceneSignalEnd();
     }
 }

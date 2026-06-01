@@ -97,7 +97,6 @@ static unsigned char far *tex1    = NULL;
    ETAT DE LA SCENE
    ========================================================= */
 static int           initialized = 0;
-static unsigned long knownStart  = 0;
 static int           angle       = 0;
 static unsigned long lastFrame   = 0;
 
@@ -273,14 +272,12 @@ void scene6(void)
     now     = readTimer();
     elapsed = elapsedTimeMs(sceneStart, now);
 
-    if (initialized && sceneStart != knownStart)
-        initialized = 0;
-
     /* -------------------------------------------------------
        Initialisation
        ------------------------------------------------------- */
     if (!initialized)
     {
+        initialized = 1;
         /* Table sinus : 512 * sizeof(long) = 2048 octets */
         sin_tab = (long far *)_fmalloc(ANGLE_STEPS * sizeof(long));
         if (!sin_tab) { quitRequested = 1; return; }
@@ -300,8 +297,6 @@ void scene6(void)
 
         angle      = 0;
         lastFrame  = now;
-        knownStart = sceneStart;
-        initialized = 1;
     }
 
     /* -------------------------------------------------------
@@ -313,8 +308,8 @@ void scene6(void)
 
         if (fadeElapsed >= FADE_MS)
         {
-            freeScene6();
             initialized = 0;
+            freeScene6();
             sceneSignalEnd();
             return;
         }
