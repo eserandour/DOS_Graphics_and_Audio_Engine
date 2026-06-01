@@ -35,7 +35,7 @@
    16x16 : 16 lignes × 2 octets =  32 octets */
 #define FONT1_BANK_8X8_GLYPH_BYTES   8
 #define FONT1_BANK_8X16_GLYPH_BYTES  16
-#define FONT1_BANK_16X16_GLYPH_BYTES  32
+/* #define FONT1_BANK_16X16_GLYPH_BYTES  32 */  /* 16x16 : mis en commentaire */
 
 /* ---------------------------------------------------------
    Macros CP850 — accents et caractères spéciaux français
@@ -88,8 +88,8 @@
    explicitement dans font1InitBank*(). */
 typedef enum {
     FONT1_SIZE_8X8   = 0,
-    FONT1_SIZE_8X16  = 1,
-    FONT1_SIZE_16X16 = 2
+    FONT1_SIZE_8X16  = 1
+/*  FONT1_SIZE_16X16 = 2 */  /* 16x16 : mis en commentaire */
 } Font1Size;
 
 /* ---------------------------------------------------------
@@ -149,13 +149,13 @@ extern Font1 FONT1_BIOS;
 /* Polices personnelles initialisées par font1Init*()(). */
 extern Font1 FONT1_BANK_8X8;    /* font1Bank8x8 */
 extern Font1 FONT1_BANK_8X16;   /* font1Bank8x16 */
-extern Font1 FONT1_BANK_16X16;  /* font1Bank16x16 */
+/* extern Font1 FONT1_BANK_16X16; */   /* 16x16 : mis en commentaire */
 
 /* Font1Bank sous-jacentes allouées en far heap.
    Initialisées par font1InitBank8x8/16x16(), NULL avant. */
 extern Font1Bank far *font1Bank8x8;
 extern Font1Bank far *font1Bank8x16;
-extern Font1Bank far *font1Bank16x16;
+/* extern Font1Bank far *font1Bank16x16; */  /* 16x16 : mis en commentaire */
 
 /* ---------------------------------------------------------
    Initialisation
@@ -172,8 +172,7 @@ void font1InitBank8x8(void);
 /* Initialise font1Bank8x16 et charge ses glyphes depuis font1dat.c. */
 void font1InitBank8x16(void);
 
-/* Initialise font1Bank16x16 et charge ses glyphes. */
-void font1InitBank16x16(void);
+/* void font1InitBank16x16(void); */  /* 16x16 : mis en commentaire */
 
 /* Libère les deux allocations far d'une Font1Bank
    (la struct elle-même et le tableau data).
@@ -208,8 +207,8 @@ void font1DefineChar8x16(Font1Bank far *fb, unsigned char c,
 
 /* Ajoute ou remplace un glyphe 16x16.
    rows[16] : 16 unsigned int, bit 15 = pixel gauche. */
-void font1DefineChar16x16(Font1Bank far *fb, unsigned char c,
-                  unsigned int rows[16]);
+/* void font1DefineChar16x16(Font1Bank far *fb, unsigned char c,
+                  unsigned int rows[16]); */  /* 16x16 : mis en commentaire */
 
 /* ---------------------------------------------------------
    Rendu — API unifiée

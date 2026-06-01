@@ -23,6 +23,6 @@ void _initFont1_8x16(void);
 
 /* Charge les glyphes 16x16 dans font1Bank16x16.
    Appelle font1DefineChar16x16() pour chaque caractère défini. */
-void _initFont1_16x16(void);
+/* void _initFont1_16x16(void); */  /* 16x16 : mis en commentaire */
 
 #endif /* FONT1DAT_H */
