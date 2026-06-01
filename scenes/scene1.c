@@ -2,6 +2,8 @@
    SCENE1.C — Scène : pixels aléatoires
    =========================================================
    Durée totale : 5 secondes.
+   Fade in  non bloquant : 0 → fade_in_ms  (t : 0.0 → 1.0)
+   Fade out non bloquant : (scene_ms - fade_out_ms) → scene_ms (t : 1.0 → 0.0)
    Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 
@@ -16,24 +18,23 @@ void scene1(void)
     static unsigned long lastRender    = 0;
     static int           initialized   = 0;
     static unsigned long lcg_state     = 0;
-    static unsigned long knownStart    = 0;
 
     const unsigned long render_interval_ms = 100UL;
     const unsigned long scene_ms           = 5000UL;
+    const unsigned long fade_in_ms         = 1000UL;  /* durée du fondu entrant  */
+    const unsigned long fade_out_ms        = 1000UL;  /* durée du fondu sortant  */
 
-    unsigned long  now = readTimer();
+    unsigned long  now     = readTimer();
+    unsigned long  elapsed = elapsedTimeMs(sceneStart, now);
     unsigned int far *dst;
     unsigned long  i;
     unsigned int   pixel;
-
-    if (initialized && sceneStart != knownStart)
-        initialized = 0;
+    float          t;
 
     if (!initialized)
     {
         lastRender = now;
         lcg_state  = (unsigned long)time(NULL);
-        knownStart = sceneStart;
 
         copyPalette(workingPalette, defaultPalette);
         setPalette(workingPalette);
@@ -41,6 +42,29 @@ void scene1(void)
         initialized = 1;
     }
 
+    /* -------------------------------------------------------
+       Calcul du facteur de fondu courant (non bloquant)
+       ------------------------------------------------------- */
+    if (elapsed < fade_in_ms)
+    {
+        /* Fade in : 0 → fade_in_ms */
+        t = (float)elapsed / (float)fade_in_ms;
+    }
+    else if (elapsed >= scene_ms - fade_out_ms)
+    {
+        /* Fade out : (scene_ms - fade_out_ms) → scene_ms */
+        t = (float)(scene_ms - elapsed) / (float)fade_out_ms;
+        if (t < 0.0f) t = 0.0f;
+    }
+    else
+    {
+        /* Pleine luminosité */
+        t = 1.0f;
+    }
+
+    /* -------------------------------------------------------
+       Rendu des pixels aléatoires (inchangé)
+       ------------------------------------------------------- */
     while (elapsedTimeMs(lastRender, now) >= render_interval_ms)
     {
         dst = (unsigned int far *)backbuffer;
@@ -57,8 +81,16 @@ void scene1(void)
         lastRender += (render_interval_ms * TARGET_HZ) / 1000UL;
     }
 
+    /* -------------------------------------------------------
+       Application du fondu sur la palette (non bloquant)
+       fadePalette() applique t à workingPalette et envoie
+       directement au DAC sans modifier workingPalette en RAM.
+       ------------------------------------------------------- */
+    fadePalette(workingPalette, t);
+
     if (elapsedTimeMs(sceneStart, now) > scene_ms)
     {
+        initialized = 0;
         sceneSignalEnd();
     }
 }
