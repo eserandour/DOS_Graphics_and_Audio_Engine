@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "video.h"
 #include "palette.h"
+#include "graphics.h"
 #include "scene.h"
 
 void scene1(void)

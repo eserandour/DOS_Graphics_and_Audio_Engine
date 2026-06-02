@@ -121,7 +121,7 @@ void scene5(void)
         int err;
         
         initialized = 1;
-        err = loadImagePal("images\\font2\\16X16_F2.pal");
+        err = loadImagePal("font2\\16X16_F2.pal");
         if (err != IMG_OK) { quitRequested = 1; return; }
         if (!font2Load(&scrollFont)) { quitRequested = 1; return; }
         textLen    = f2len(scrollText);
