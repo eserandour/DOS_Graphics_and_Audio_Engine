@@ -15,7 +15,7 @@
      font1DrawChar(x, y, 'A', 255, &FONT1_BANK_16X16);
 
    Pour ajouter une nouvelle police :
-     1. Déclarer une Font1Bank dans font1dat.c.
+     1. Déclarer une Font1Bank dans font1/.
      2. La charger avec _initFont1Bank() + font1DefineChar*()().
      3. Créer une Font1 pointant vers cette Font1Bank.
 
@@ -35,7 +35,7 @@
    16x16 : 16 lignes × 2 octets =  32 octets */
 #define FONT1_BANK_8X8_GLYPH_BYTES   8
 #define FONT1_BANK_8X16_GLYPH_BYTES  16
-/* #define FONT1_BANK_16X16_GLYPH_BYTES  32 */  /* 16x16 : mis en commentaire */
+#define FONT1_BANK_16X16_GLYPH_BYTES  32
 
 /* ---------------------------------------------------------
    Macros CP850 — accents et caractères spéciaux français
@@ -88,8 +88,8 @@
    explicitement dans font1InitBank*(). */
 typedef enum {
     FONT1_SIZE_8X8   = 0,
-    FONT1_SIZE_8X16  = 1
-/*  FONT1_SIZE_16X16 = 2 */  /* 16x16 : mis en commentaire */
+    FONT1_SIZE_8X16  = 1,
+    FONT1_SIZE_16X16 = 2
 } Font1Size;
 
 /* ---------------------------------------------------------
@@ -149,13 +149,13 @@ extern Font1 FONT1_BIOS;
 /* Polices personnelles initialisées par font1Init*()(). */
 extern Font1 FONT1_BANK_8X8;    /* font1Bank8x8 */
 extern Font1 FONT1_BANK_8X16;   /* font1Bank8x16 */
-/* extern Font1 FONT1_BANK_16X16; */   /* 16x16 : mis en commentaire */
+extern Font1 FONT1_BANK_16X16;  /* font1Bank16x16 */
 
 /* Font1Bank sous-jacentes allouées en far heap.
    Initialisées par font1InitBank8x8/16x16(), NULL avant. */
 extern Font1Bank far *font1Bank8x8;
 extern Font1Bank far *font1Bank8x16;
-/* extern Font1Bank far *font1Bank16x16; */  /* 16x16 : mis en commentaire */
+extern Font1Bank far *font1Bank16x16;
 
 /* ---------------------------------------------------------
    Initialisation
@@ -165,14 +165,15 @@ extern Font1Bank far *font1Bank8x16;
    À appeler avant tout font1DrawChar avec FONT1_BIOS. */
 void font1InitBios(void);
 
-/* Initialise font1Bank8x8 et charge ses glyphes depuis font1dat.c.
+/* Initialise font1Bank8x8 et charge ses glyphes depuis font1/.
    Met à jour FONT1_BANK_8X8 pour qu'elle pointe sur font1Bank8x8. */
 void font1InitBank8x8(void);
 
-/* Initialise font1Bank8x16 et charge ses glyphes depuis font1dat.c. */
+/* Initialise font1Bank8x16 et charge ses glyphes depuis font1/. */
 void font1InitBank8x16(void);
 
-/* void font1InitBank16x16(void); */  /* 16x16 : mis en commentaire */
+/* Initialise font1Bank16x16 et charge ses glyphes. */
+void font1InitBank16x16(void);
 
 /* Libère les deux allocations far d'une Font1Bank
    (la struct elle-même et le tableau data).
@@ -207,8 +208,8 @@ void font1DefineChar8x16(Font1Bank far *fb, unsigned char c,
 
 /* Ajoute ou remplace un glyphe 16x16.
    rows[16] : 16 unsigned int, bit 15 = pixel gauche. */
-/* void font1DefineChar16x16(Font1Bank far *fb, unsigned char c,
-                  unsigned int rows[16]); */  /* 16x16 : mis en commentaire */
+void font1DefineChar16x16(Font1Bank far *fb, unsigned char c,
+                  unsigned int rows[16]);
 
 /* ---------------------------------------------------------
    Rendu — API unifiée
@@ -229,5 +230,15 @@ void font1DrawText(int x, int y, const char *str,
    police f. */
 void font1DrawTextCentered(int y, const char *str,
                       unsigned char color, Font1 *f);
+
+
+/* ---------------------------------------------------------
+   Chargeurs de glyphes — usage interne uniquement
+   Appelées par font1InitBank8x8/8x16/16x16 dans font1.c.
+   Ne pas appeler directement depuis les scènes ou main.c.
+   --------------------------------------------------------- */
+void _initFont1_8x8(void);
+void _initFont1_8x16(void);
+void _initFont1_16x16(void);
 
 #endif /* FONT1_H */

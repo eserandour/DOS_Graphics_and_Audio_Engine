@@ -5,7 +5,7 @@
    acceptent un Font1* qui encapsule indifféremment la police
    BIOS ROM ou une Font1Bank personnelle.
 
-   Les données brutes des glyphes sont dans font1dat.c.
+   Les données brutes des glyphes sont dans font1/.
    ========================================================= */
 
 #include <stdlib.h>    /* exit    */
@@ -15,7 +15,6 @@
 #include "video.h"     /* SCREEN_WIDTH */
 #include "graphics.h"  /* putPixel */
 #include "font1.h"
-#include "font1dat.h"  /* _initFont1_8x8, _initFont1_8x16, _initFont1_16x16 */
 
 /* =========================================================
    VARIABLES GLOBALES
@@ -29,7 +28,7 @@ static unsigned char far *font1Bios = NULL;
 /* Font1Bank sous-jacentes, allouées en far heap par font1Init*()(). */
 Font1Bank far *font1Bank8x8   = NULL;
 Font1Bank far *font1Bank8x16  = NULL;
-/* Font1Bank far *font1Bank16x16  = NULL; */  /* 16x16 : mis en commentaire */
+Font1Bank far *font1Bank16x16  = NULL;
 
 /* Structures Font1 globales prêtes à l'emploi.
    Initialisées par font1InitBios() et font1Init*().
@@ -43,7 +42,7 @@ Font1Bank far *font1Bank8x16  = NULL;
 Font1 FONT1_BIOS       = { FONT1_TYPE_BIOS, NULL,  8 };
 Font1 FONT1_BANK_8X8   = { FONT1_TYPE_BANK, NULL,  8 };
 Font1 FONT1_BANK_8X16  = { FONT1_TYPE_BANK, NULL,  8 };
-/* Font1 FONT1_BANK_16X16 = { FONT1_TYPE_BANK, NULL, 16 }; */  /* 16x16 : mis en commentaire */
+Font1 FONT1_BANK_16X16 = { FONT1_TYPE_BANK, NULL, 16 };
 
 /* =========================================================
    INITIALISATION INTERNE
@@ -59,7 +58,7 @@ static void _initFont1Bank(Font1Bank far *fb, Font1Size size)
     {
         case FONT1_SIZE_8X8:   bpg = FONT1_BANK_8X8_GLYPH_BYTES;   break;
         case FONT1_SIZE_8X16:  bpg = FONT1_BANK_8X16_GLYPH_BYTES;  break;
-        /* case FONT1_SIZE_16X16: bpg = FONT1_BANK_16X16_GLYPH_BYTES; break; */  /* 16x16 : mis en commentaire */
+        case FONT1_SIZE_16X16: bpg = FONT1_BANK_16X16_GLYPH_BYTES; break;
     }
 
     fb->size            = size;
@@ -130,7 +129,9 @@ void font1DefineChar8x16(Font1Bank far *fb, unsigned char c,
     g[12]=b12; g[13]=b13; g[14]=b14; g[15]=b15;
 }
 
-/* void font1DefineChar16x16 — 16x16 : mis en commentaire
+/* Ajoute ou remplace un glyphe 16x16.
+   Stockage big-endian : octet haut en premier pour que
+   le rendu lise les bits de gauche à droite. */
 void font1DefineChar16x16(Font1Bank far *fb, unsigned char c,
                   unsigned int rows[16])
 {
@@ -150,7 +151,6 @@ void font1DefineChar16x16(Font1Bank far *fb, unsigned char c,
         g[i*2+1] = (unsigned char)(rows[i] & 0xFF);
     }
 }
-*/
 
 /* =========================================================
    RENDU INTERNE
@@ -193,7 +193,9 @@ static void _renderGlyph8x16(int x, int y, unsigned char color,
     }
 }
 
-/* _renderGlyph16 — 16x16 : mis en commentaire
+/* Rend un glyphe 16x16.
+   Reconstitue chaque ligne en unsigned int depuis 2 octets
+   big-endian, puis teste les 16 bits avec masque 0x8000→0x0001. */
 static void _renderGlyph16(int x, int y, unsigned char color,
                            unsigned char far *glyph)
 {
@@ -208,7 +210,6 @@ static void _renderGlyph16(int x, int y, unsigned char color,
                 putPixel(x+col, y+row, color);
     }
 }
-*/
 
 /* =========================================================
    RENDU PUBLIC — API UNIFIÉE
@@ -248,9 +249,9 @@ void font1DrawChar(int x, int y, unsigned char c,
             case FONT1_SIZE_8X16:
                 _renderGlyph8x16(x, y, color, g);
                 break;
-            /* case FONT1_SIZE_16X16:        16x16 : mis en commentaire
+            case FONT1_SIZE_16X16:
                 _renderGlyph16(x, y, color, g);
-                break; */
+                break;
         }
     }
 }
@@ -299,7 +300,7 @@ void font1InitBios(void)
 }
 
 /* Alloue font1Bank8x8 en far heap, initialise la Font1Bank,
-   charge ses glyphes depuis font1dat.c,
+   charge ses glyphes depuis font1/,
    et met à jour FONT1_BANK_8X8 pour qu'elle pointe dessus. */
 void font1InitBank8x8(void)
 {
@@ -311,7 +312,7 @@ void font1InitBank8x8(void)
 }
 
 /* Alloue font1Bank8x16 en far heap, initialise la Font1Bank,
-   charge ses glyphes depuis font1dat.c,
+   charge ses glyphes depuis font1/,
    et met a jour FONT1_BANK_8X16 pour qu'elle pointe dessus. */
 void font1InitBank8x16(void)
 {
@@ -322,7 +323,9 @@ void font1InitBank8x16(void)
     FONT1_BANK_8X16.bank = font1Bank8x16;
 }
 
-/* font1InitBank16x16 — 16x16 : mis en commentaire
+/* Alloue font1Bank16x16 en far heap, initialise la Font1Bank,
+   charge ses glyphes depuis font1/,
+   et met à jour FONT1_BANK_16X16 pour qu'elle pointe dessus. */
 void font1InitBank16x16(void)
 {
     font1Bank16x16 = (Font1Bank far *)_fmalloc(sizeof(Font1Bank));
@@ -331,7 +334,6 @@ void font1InitBank16x16(void)
     _initFont1_16x16();
     FONT1_BANK_16X16.bank = font1Bank16x16;
 }
-*/
 
 /* Libère les deux allocations far d'une Font1Bank.
    Appel sans effet si *fb == NULL. */
