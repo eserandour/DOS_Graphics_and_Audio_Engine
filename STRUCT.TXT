@@ -1,4 +1,4 @@
-projet/
+DEMO/
 +-- main.c
 +-- app.h                      flags globaux de l'application (quitRequested)
 +-- timer.h / timer.c          timer haute résolution (INT 08h, PIT à 70 Hz)
@@ -11,15 +11,25 @@ projet/
 |                                loadImageZoneRaw / loadImageZoneRawKey
 |                                loadScreenRaw, drawImage, drawScreen
 +-- font1.h / font1.c          moteur texte bitmap (BIOS ROM + Font1Bank)
-+-- font1dat.h / font1dat.c    donnees des glyphes personnels 8x8 et 16x16
++-- font1/                     données des glyphes (générés par psf2c.py / ttf2c.py)
+|   +-- f1d8x8.c               police cp850-8x8  (PSF1, extrait de cp850-8x8.psf.gz)
+|   +-- f1d8x16.c              police cp850-8x16 (PSF1, extrait de cp850-8x16.psf.gz)
+|   +-- f1d16x16.c             police KiwiSoda Medium 16x16 (TTF converti par ttf2c.py)
 +-- font2.h / font2.c          texte par feuille de sprites (.raw)
 |                                police décrite par Font2Desc (fichier, dimensions,
 |                                plage de caractères, colorKey)
 |                                polices prédéfinies : FONT2_DESC_DEFAULT (font.raw 32x32)
-|                                                      FONT2_DESC_16X16_F2  (16X16_F2.raw 16x16)
+|                                                      FONT2_DESC_16X16_F2 (16X16_F2.raw 16x16)
 |                                API : font2Load / font2Free / font2IsLoaded
 |                                      font2DrawChar / font2DrawText / font2DrawTextCentered
 |                                      font2GetPixel
++-- font2/                     feuilles de sprites pour font2
+|   +-- font.raw / font.pal    feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
+|   +-- font.png               aperçu PNG de la feuille
+|   +-- font_palette.png       aperçu de la palette VGA 6 bits
+|   +-- 16X16_F2.raw / 16X16_F2.pal  feuille de sprites 320x48, glyphes 16x16, 0x20-0x5B
+|   +-- 16X16_F2.png           aperçu PNG de la feuille
+|   +-- 16X16_F2_palette.png   aperçu de la palette VGA 6 bits
 +-- scene.h / scene.c          gestionnaire de scènes + flag quitRequested
 +-- scenes/
 |   +-- scene1.c    pixels aléatoires LCG, 5s, puis SCENE_2 (cut)
@@ -37,21 +47,30 @@ projet/
 |                     arithmétique virgule fixe 16.16 (pas de FPU)
 |                     zoom oscillant (×0.6..×2.4, cycle 4s)
 |                     rotation continue + fade-out palette en fin de scène
-+-- freedos.raw / freedos.pal           texture rotozoom 256x256, palette VGA 6 bits
 +-- images/
-|   +-- font2/
-|   |   +-- font.raw / font.pal          feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
-|   |   +-- 16X16_F2.raw / 16X16_F2.pal      feuille de sprites 320x48, glyphes 16x16, 0x20-0x5B
-|   +-- *.raw / *.pal
+|   +-- freedos.raw / freedos.pal       texture rotozoom 256x256, palette VGA 6 bits
+|   +-- freedos.png                     aperçu PNG de la texture
+|   +-- freedos_palette.png             aperçu de la palette VGA 6 bits
 |
 +-- BUILD.BAT
 +-- LINK.RSP
 +-- CLEAN.BAT
 +-- CLEANALL.BAT
 |
-+-- OUTILS
-    +-- fonteditor.htm  (pour créer ses propres polices de caractères 8x8, 8x16 et 16x16)
-    +-- psf2c.py        (extrait une police Linux PSF1/PSF2 en .c et .png)
-    +-- vgatool.py      (convert : produit .raw + .pal + _palette.png en une passe)
-    |                   (palette : visualise un fichier .pal existant en .png)
-    |                   (couleurs palette PNG fidèles au rendu VGA 6 bits)
++-- OUTILS/
+    +-- fonteditor.htm    éditeur visuel de polices bitmap 8x8, 8x16 et 16x16 (HTML/JS)
+    +-- ascii_cp850.py    affiche la table ASCII CP850 dans un terminal DOS/DJGPP
+    +-- ascii_cp850.txt   table ASCII CP850 pré-rendue en texte
+    +-- vgatool.py        convert  : produit .raw + .pal + _palette.png en une passe
+    |                     palette  : visualise un fichier .pal existant en .png
+    |                     couleurs palette PNG fidèles au rendu VGA 6 bits
+    +-- psf/              polices Linux PSF et outil de conversion
+    |   +-- psf2c.py      extrait une police Linux PSF1/PSF2 en .c et .png
+    |   +-- cp850-8x8.psf.gz    police CP850 8x8 pixels (source pour f1d8x8.c)
+    |   +-- cp850-8x8.png       aperçu des glyphes 8x8
+    |   +-- cp850-8x16.psf.gz   police CP850 8x16 pixels (source pour f1d8x16.c)
+    |   +-- cp850-8x16.png      aperçu des glyphes 8x16
+    +-- ttf/              police TrueType et outil de conversion
+        +-- ttf2c.py      convertit une police TTF en tableau .c pour Font1Bank
+        +-- KiwiSoda.ttf  police TrueType source (source pour f1d16x16.c)
+        +-- KiwiSoda_16x16.png  aperçu des glyphes 16x16 générés
