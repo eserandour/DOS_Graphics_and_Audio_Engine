@@ -97,7 +97,7 @@ void scene2(void)
         phase4_initialized = 0;   /* toujours réinitialiser au démarrage */
         copyPalette(workingPalette, defaultPalette);
         setPalette(workingPalette);
-        generatePinkPalette(pinkPalette);
+        buildPinkPalette(pinkPalette);
         clearScreen(0);
         flip();
     }

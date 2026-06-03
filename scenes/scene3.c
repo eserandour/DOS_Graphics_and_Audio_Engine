@@ -125,7 +125,7 @@ void scene3(void)
         font1InitBank8x16();
         font1InitBank16x16();
 
-        generatePinkPalette(pinkPalette);
+        buildPinkPalette(pinkPalette);
         copyPalette(workingPalette, pinkPalette);
         setPalette(workingPalette);
         drawScreen(screen);
