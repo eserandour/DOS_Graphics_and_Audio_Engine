@@ -17,4 +17,5 @@ wcc -ml -0 -os -I. scenes\scene3.c > scene3.out
 wcc -ml -0 -os -I. scenes\scene4.c > scene4.out
 wcc -ml -0 -os -I. scenes\scene5.c > scene5.out
 wcc -ml -0 -os -I. scenes\scene6.c > scene6.out
+wcc -ml -0 -os -I. scenes\scene7.c > scene7.out
 wlink @LINK.RSP > link.out

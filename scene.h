@@ -11,7 +11,8 @@ typedef enum {
     SCENE_3 = 2,   /* demonstration des polices       */
     SCENE_4 = 3,   /* affichage image RAW+PAL         */
     SCENE_5 = 4,   /* scrolling de texte horizontal   */
-    SCENE_6 = 5    /* rotozoom freedos                */
+    SCENE_6 = 5,   /* rotozoom freedos                */
+    SCENE_7 = 6    /* demonstration primitives graphics*/
 } Scene;
 
 extern Scene currentScene;

@@ -20,6 +20,7 @@ Color paletteA[256];         /* palette source pour lerp    */
 Color paletteB[256];         /* palette cible pour lerp     */
 Color grayPalette[256];      /* dégradé noir → blanc        */
 Color pinkPalette[256];      /* noir + rouge → blanc        */
+Color rainbowPalette[256];   /* cercle chromatique HSV 360° */
 
 /* =========================================================
    ACCÈS MATÉRIEL DAC VGA
@@ -172,7 +173,7 @@ void cyclePaletteRight(Color *pal, int start, int end)
 /* Génère un dégradé linéaire du noir au blanc.
    Les composantes VGA sont sur 6 bits (0-63).
    index / 4 = index >> 2 convertit 0-255 en 0-63. */
-void generateGrayPalette(Color *pal)
+void buildGrayPalette(Color *pal)
 {
     int i;
     unsigned char v;
@@ -191,7 +192,7 @@ void generateGrayPalette(Color *pal)
      qui montent linéairement de 0 à 63.
    Résultat visuel : du rouge vif vers le blanc en passant
    par le rose. Formule : (i * 63) / 255 = i / 4.04... */
-void generatePinkPalette(Color *pal)
+void buildPinkPalette(Color *pal)
 {
     int i;
     pal[0].r = 0; pal[0].g = 0; pal[0].b = 0;   /* noir */
@@ -200,5 +201,41 @@ void generatePinkPalette(Color *pal)
         pal[i].r = 63;                                  /* rouge max        */
         pal[i].g = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
         pal[i].b = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
+    }
+}
+
+/* Génère un cercle chromatique HSV complet sur 360° :
+   - index 0   : noir (fond d'écran)
+   - index 1-255 : teinte HSV à saturation=1, valeur=1.
+   La teinte tourne de 0° (rouge) à 360° (rouge) de façon
+   continue, ce qui permet les effets de cycle de palette
+   sans saut de couleur entre les index 255 et 1.
+   Conversion HSV → RGB par sextants de 60°. */
+void buildRainbowPalette(Color *pal)
+{
+    int i, hi;
+    float h, f, r, g, b;
+
+    pal[0].r = 0; pal[0].g = 0; pal[0].b = 0;   /* noir */
+
+    for (i = 1; i < 256; i++)
+    {
+        h  = (float)(i - 1) / 255.0f * 360.0f;  /* 0° → 360° */
+        hi = (int)(h / 60.0f) % 6;
+        f  = h / 60.0f - (int)(h / 60.0f);
+
+        switch (hi)
+        {
+            case 0: r = 1.0f; g = f;    b = 0.0f; break;
+            case 1: r = 1.0f-f; g = 1.0f; b = 0.0f; break;
+            case 2: r = 0.0f; g = 1.0f; b = f;    break;
+            case 3: r = 0.0f; g = 1.0f-f; b = 1.0f; break;
+            case 4: r = f;    g = 0.0f; b = 1.0f; break;
+            default:r = 1.0f; g = 0.0f; b = 1.0f-f; break;
+        }
+
+        pal[i].r = (unsigned char)(r * 63.0f);
+        pal[i].g = (unsigned char)(g * 63.0f);
+        pal[i].b = (unsigned char)(b * 63.0f);
     }
 }

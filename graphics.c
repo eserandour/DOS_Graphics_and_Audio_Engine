@@ -38,37 +38,108 @@ unsigned char getPixel(int x, int y)
 }
 
 /* =========================================================
-   LIGNE — Algorithme de Bresenham
+   LIGNE — Algorithme de Bresenham + Clipping Cohen-Sutherland
    =========================================================
-   Principe : on avance pas à pas de (x1,y1) vers (x2,y2).
-   À chaque étape on choisit le pixel le plus proche de la
-   droite idéale en utilisant une variable d'erreur entière.
-   Pas de virgule flottante, pas de division : très rapide.
+   Le clipping Cohen-Sutherland divise le plan en 9 zones
+   à l'aide de 4 bits (OUT_LEFT, OUT_RIGHT, OUT_BOTTOM,
+   OUT_TOP). On classe chaque extrémité dans sa zone, puis :
+   - si les deux codes = 0 → segment entièrement visible.
+   - si (code1 & code2) ≠ 0 → segment entièrement dehors.
+   - sinon → on calcule l'intersection avec la frontière
+     correspondante et on recommence.
+   Avantage : rejette rapidement les segments hors écran
+   sans aucune division.
    ========================================================= */
+
+#define CS_OUT_LEFT   1
+#define CS_OUT_RIGHT  2
+#define CS_OUT_BOTTOM 4
+#define CS_OUT_TOP    8
+
+static int cs_code(int x, int y)
+{
+    int code = 0;
+    if (x < 0)                code |= CS_OUT_LEFT;
+    if (x >= SCREEN_WIDTH)    code |= CS_OUT_RIGHT;
+    if (y < 0)                code |= CS_OUT_TOP;
+    if (y >= SCREEN_HEIGHT)   code |= CS_OUT_BOTTOM;
+    return code;
+}
 
 void drawLine(int x1, int y1, int x2, int y2, unsigned char color)
 {
-    int dx  = abs(x2 - x1);    /* distance horizontale        */
-    int dy  = abs(y2 - y1);    /* distance verticale          */
-    int sx  = (x1 < x2) ? 1 : -1;  /* sens horizontal (+1 ou -1) */
-    int sy  = (y1 < y2) ? 1 : -1;  /* sens vertical   (+1 ou -1) */
-    int err = dx - dy;          /* accumulateur d'erreur       */
-    int e2;                     /* erreur doublée (2 * err)    */
+    int code1 = cs_code(x1, y1);
+    int code2 = cs_code(x2, y2);
+    int code, dx, dy, sx, sy, err, e2;
+
+    /* Boucle de clipping Cohen-Sutherland. */
+    while (1)
+    {
+        if (!(code1 | code2))
+            break;              /* entièrement visible → on sort */
+
+        if (code1 & code2)
+            return;             /* entièrement hors écran → rien à dessiner */
+
+        /* Choisir le point à déplacer (priorité à code1). */
+        code = code1 ? code1 : code2;
+
+        /* Calculer l'intersection avec la frontière touchée.
+           Formule : x = x1 + (x2-x1)*(bord_y - y1)/(y2-y1)
+           et son symétrique pour l'axe Y.
+           On évite la division par 0 : les arêtes parallèles
+           à l'axe Y ne peuvent pas sortir par OUT_TOP/OUT_BOTTOM
+           et vice-versa, donc dy et dx sont ≠ 0 dans chaque cas. */
+        dx = x2 - x1;
+        dy = y2 - y1;
+
+        if (code & CS_OUT_BOTTOM)           /* sortie par le bas */
+        {
+            int nx = x1 + dx * (SCREEN_HEIGHT - 1 - y1) / dy;
+            int ny = SCREEN_HEIGHT - 1;
+            if (code == code1) { x1 = nx; y1 = ny; code1 = cs_code(x1, y1); }
+            else               { x2 = nx; y2 = ny; code2 = cs_code(x2, y2); }
+        }
+        else if (code & CS_OUT_TOP)         /* sortie par le haut */
+        {
+            int nx = x1 + dx * (-y1) / dy;
+            int ny = 0;
+            if (code == code1) { x1 = nx; y1 = ny; code1 = cs_code(x1, y1); }
+            else               { x2 = nx; y2 = ny; code2 = cs_code(x2, y2); }
+        }
+        else if (code & CS_OUT_RIGHT)       /* sortie par la droite */
+        {
+            int ny = y1 + dy * (SCREEN_WIDTH - 1 - x1) / dx;
+            int nx = SCREEN_WIDTH - 1;
+            if (code == code1) { x1 = nx; y1 = ny; code1 = cs_code(x1, y1); }
+            else               { x2 = nx; y2 = ny; code2 = cs_code(x2, y2); }
+        }
+        else                                /* sortie par la gauche */
+        {
+            int ny = y1 + dy * (-x1) / dx;
+            int nx = 0;
+            if (code == code1) { x1 = nx; y1 = ny; code1 = cs_code(x1, y1); }
+            else               { x2 = nx; y2 = ny; code2 = cs_code(x2, y2); }
+        }
+    }
+
+    /* Segment clippé → tracé par Bresenham. */
+    dx  = abs(x2 - x1);
+    dy  = abs(y2 - y1);
+    sx  = (x1 < x2) ? 1 : -1;
+    sy  = (y1 < y2) ? 1 : -1;
+    err = dx - dy;
 
     while (1)
     {
+        /* Les coordonnées sont désormais garanties dans les bornes :
+           putPixel sans vérification serait possible, mais on la
+           garde pour la robustesse. */
         putPixel(x1, y1, color);
-
-        /* Condition d'arrêt : on a atteint le point final. */
         if (x1 == x2 && y1 == y2) break;
-
-        /* e2 = 2 * err, calculé par décalage binaire.
-           On compare e2 à -dy et dx pour décider si on
-           avance horizontalement, verticalement, ou les deux
-           (cas diagonal). */
         e2 = err << 1;
-        if (e2 > -dy) { err -= dy; x1 += sx; }  /* avancer en X */
-        if (e2 <  dx) { err += dx; y1 += sy; }  /* avancer en Y */
+        if (e2 > -dy) { err -= dy; x1 += sx; }
+        if (e2 <  dx) { err += dx; y1 += sy; }
     }
 }
 
@@ -85,13 +156,27 @@ void drawRect(int x1, int y1, int x2, int y2, unsigned char color)
     drawLine(x1, y2, x1, y1, color);   /* bord gauche */
 }
 
-/* Rectangle plein : remplissage ligne par ligne.
-   Pour chaque ligne y, on calcule l'offset du pixel (x1,y)
-   et on remplit x2-x1+1 octets avec _fmemset.
-   Beaucoup plus rapide que putPixel en boucle. */
+/* Rectangle plein : remplissage ligne par ligne avec clipping.
+   On clamp les coordonnées sur les bornes de l'écran avant de
+   commencer : une seule vérification hors de la boucle, puis
+   _fmemset travaille uniquement sur des lignes valides. */
 void drawRectFill(int x1, int y1, int x2, int y2, unsigned char color)
 {
     int y;
+
+    /* Normaliser : s'assurer que x1 ≤ x2 et y1 ≤ y2. */
+    if (x1 > x2) { int t = x1; x1 = x2; x2 = t; }
+    if (y1 > y2) { int t = y1; y1 = y2; y2 = t; }
+
+    /* Clipping : restreindre aux bornes de l'écran. */
+    if (x1 < 0)              x1 = 0;
+    if (x2 >= SCREEN_WIDTH)  x2 = SCREEN_WIDTH  - 1;
+    if (y1 < 0)              y1 = 0;
+    if (y2 >= SCREEN_HEIGHT) y2 = SCREEN_HEIGHT - 1;
+
+    /* Rectangle entièrement hors écran. */
+    if (x1 > x2 || y1 > y2) return;
+
     for (y = y1; y <= y2; y++)
         _fmemset(backbuffer + OFFSET(x1, y), color, x2 - x1 + 1);
 }

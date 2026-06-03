@@ -8,12 +8,17 @@
    Rien n'est visible à l'écran tant que flip() n'est pas
    appelé (voir video.h).
 
-   Clipping : putPixel vérifie les bornes et ignore silencieusement
-   les coordonnées hors écran. drawCircle et drawCircleFill ont
-   aussi un clipping intégré. En revanche drawLine, drawRect,
-   drawPolygon et drawPolygonFill n'ont pas de clipping : veiller
-   à rester dans les bornes (0..319 en X, 0..199 en Y) lorsqu'on
-   les appelle.
+   Clipping : toutes les fonctions de dessin clippent correctement.
+   - putPixel          : vérification de bornes simple.
+   - drawLine          : algorithme de Cohen-Sutherland (clip avant
+                         le tracé Bresenham → aucun pixel hors écran).
+   - drawRect          : via drawLine (clippé).
+   - drawRectFill      : clamp des coordonnées avant remplissage.
+   - drawPolygon       : via drawLine (clippé).
+   - drawPolygonFill   : clipping vertical + horizontal sur chaque
+                         scanline (even-odd rule).
+   - drawCircle        : vérification de bornes par octant.
+   - drawCircleFill    : clamp de chaque ligne horizontale.
    ========================================================= */
 
 /* ---------------------------------------------------------
@@ -45,9 +50,10 @@ unsigned char getPixel(int x, int y);
    --------------------------------------------------------- */
 
 /* Trace un segment entre (x1,y1) et (x2,y2).
-   Utilise l'algorithme de Bresenham qui ne travaille qu'en
-   arithmétique entière (pas de division, pas de virgule
-   flottante) : idéal pour le 8086. */
+   Clipping Cohen-Sutherland intégré : les coordonnées hors
+   écran sont clippées avant le tracé. Tracé par Bresenham
+   (arithmétique entière, pas de virgule flottante).
+   Un segment entièrement hors écran ne dessine rien. */
 void drawLine(int x1, int y1, int x2, int y2, unsigned char color);
 
 /* Trace le contour d'un rectangle (4 appels à drawLine).
@@ -56,8 +62,9 @@ void drawLine(int x1, int y1, int x2, int y2, unsigned char color);
 void drawRect(int x1, int y1, int x2, int y2, unsigned char color);
 
 /* Trace un rectangle plein.
-   Remplit chaque ligne horizontale avec _fmemset, ce qui
-   est bien plus rapide qu'appeler putPixel pour chaque pixel. */
+   Clipping intégré : les coordonnées sont clampées sur les
+   bornes de l'écran avant remplissage. Remplit chaque ligne
+   horizontale avec _fmemset (bien plus rapide que putPixel). */
 void drawRectFill(int x1, int y1, int x2, int y2, unsigned char color);
 
 /* ---------------------------------------------------------

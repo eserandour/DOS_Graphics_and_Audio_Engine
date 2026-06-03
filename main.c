@@ -42,6 +42,7 @@ static const Scene playlist[] = {
     SCENE_4,
     SCENE_5,
     SCENE_6,
+    SCENE_7,
 };
 #define PLAYLIST_LEN (sizeof(playlist) / sizeof(playlist[0]))
 

@@ -53,6 +53,12 @@ extern Color grayPalette[256];
    avec vert et bleu croissants (rouge → blanc). */
 extern Color pinkPalette[256];
 
+/* Palette cercle chromatique HSV :
+   index 0 = noir, index 1-255 = teinte tournante sur 360°
+   (rouge → jaune → vert → cyan → bleu → magenta → rouge).
+   Utile pour les effets de cycle de palette continus. */
+extern Color rainbowPalette[256];
+
 /* ---------------------------------------------------------
    Fonctions — Accès matériel DAC
    --------------------------------------------------------- */
@@ -114,12 +120,19 @@ void cyclePaletteRight(Color *pal, int start, int end);
    index 0 → r=g=b=0 (noir)
    index 255 → r=g=b=63 (blanc)
    Conversion : val_6bits = index / 4 (décalage de 2 bits). */
-void generateGrayPalette(Color *pal);
+void buildGrayPalette(Color *pal);
 
 /* Génère une palette rose/rouge :
    index 0   → noir (r=g=b=0)
    index 1-255 → rouge fixe à 63, vert et bleu croissants
    de 0 à 63. L'effet va du rouge pur vers le blanc rosé. */
-void generatePinkPalette(Color *pal);
+void buildPinkPalette(Color *pal);
+
+/* Génère un cercle chromatique HSV complet :
+   index 0   → noir (r=g=b=0)
+   index 1-255 → teinte sur 360° à saturation et valeur max.
+   Les décalages de 128 dans l'index donnent la couleur
+   complémentaire exacte, utile pour les effets de contraste. */
+void buildRainbowPalette(Color *pal);
 
 #endif /* PALETTE_H */
