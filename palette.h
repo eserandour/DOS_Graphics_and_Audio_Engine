@@ -135,4 +135,9 @@ void buildPinkPalette(Color *pal);
    complémentaire exacte, utile pour les effets de contraste. */
 void buildRainbowPalette(Color *pal);
 
+/* Sauvegarde une palette dans un fichier .pal (768 octets bruts :
+   256 triplets R/G/B sur 6 bits, même format que les .pal du projet).
+   Retourne 1 si succès, 0 si échec (fopen ou fwrite). */
+int savePalette(const Color *pal, const char *filename);
+
 #endif /* PALETTE_H */

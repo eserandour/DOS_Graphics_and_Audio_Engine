@@ -2,6 +2,7 @@
    PALETTE.C — Gestion de la palette VGA 256 couleurs
    ========================================================= */
 
+#include <stdio.h>    /* FILE, fopen, fwrite, fclose       */
 #include <string.h>   /* memcpy, _fmemset                  */
 #include <conio.h>    /* outp, inp                         */
 #include "palette.h"
@@ -238,4 +239,38 @@ void buildRainbowPalette(Color *pal)
         pal[i].g = (unsigned char)(g * 63.0f);
         pal[i].b = (unsigned char)(b * 63.0f);
     }
+}
+
+/* =========================================================
+   SAUVEGARDE PALETTE
+   =========================================================
+   Écrit 256 triplets R/G/B (6 bits) dans un fichier binaire.
+   Format identique à celui des .pal du projet : 768 octets
+   bruts, sans en-tête, compatibles avec vgatool.py et
+   loadImageRaw.
+   ========================================================= */
+
+int savePalette(const Color *pal, const char *filename)
+{
+    FILE *f;
+    int   i;
+    unsigned char buf[3];
+
+    f = fopen(filename, "wb");
+    if (!f) return 0;
+
+    for (i = 0; i < 256; i++)
+    {
+        buf[0] = pal[i].r;
+        buf[1] = pal[i].g;
+        buf[2] = pal[i].b;
+        if (fwrite(buf, 1, 3, f) != 3)
+        {
+            fclose(f);
+            return 0;
+        }
+    }
+
+    fclose(f);
+    return 1;
 }
