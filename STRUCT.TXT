@@ -5,7 +5,17 @@ DEMO/
 +-- keyboard.h / keyboard.c    handler clavier (INT 09h) : Échap → quitRequested
 +-- video.h / video.c
 +-- palette.h / palette.c
-+-- graphics.h / graphics.c
+|                                Palettes globales : defaultPalette, workingPalette,
+|                                paletteA, paletteB, grayPalette, pinkPalette,
+|                                rainbowPalette
+|                                Générateurs : buildGrayPalette / buildPinkPalette
+|                                              buildRainbowPalette (cercle chromatique HSV 360°)
++-- graphics.h / graphics.c    primitives 2D en mode 13h — clipping intégré sur toutes les fonctions
+|                                putPixel / getPixel / clearScreen
+|                                drawLine (Cohen-Sutherland + Bresenham)
+|                                drawRect / drawRectFill (clamp des coordonnées)
+|                                drawPolygon / drawPolygonFill (scanline, even-odd rule)
+|                                drawCircle / drawCircleFill (mid-point circle, symétries 8)
 +-- image.h / image.c          chargement RAW/PAL, transparence par colorKey
 |                                loadImageRaw / loadImageRawKey
 |                                loadImageZoneRaw / loadImageZoneRawKey
@@ -47,6 +57,14 @@ DEMO/
 |                     arithmétique virgule fixe 16.16 (pas de FPU)
 |                     zoom oscillant (×0.6..×2.4, cycle 4s)
 |                     rotation continue + fade-out palette en fin de scène
+|   +-- scene7.c    démonstration de toutes les primitives graphics (18s, 6 phases × 3s)
+|                     phase 1 : clearScreen + putPixel + getPixel (pluie de pixels)
+|                     phase 2 : drawLine (étoile tournante, clipping Cohen-Sutherland)
+|                     phase 3 : drawRect + drawRectFill (grille + contours concentriques)
+|                     phase 4 : drawCircle + drawCircleFill (ondes + centres hors écran)
+|                     phase 5 : drawPolygon + drawPolygonFill + getPixel (étoile, triangle)
+|                     phase 6 : composition finale — toutes les primitives simultanées
+|                     palette : rainbowPalette (cercle chromatique HSV 360°)
 +-- images/
 |   +-- freedos.raw / freedos.pal       texture rotozoom 256x256, palette VGA 6 bits
 |   +-- freedos.png                     aperçu PNG de la texture
