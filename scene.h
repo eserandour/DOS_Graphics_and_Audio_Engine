@@ -6,13 +6,14 @@
    ========================================================= */
 
 typedef enum {
-    SCENE_1 = 0,   /* pixels aleatoires (LCG)        */
-    SCENE_2 = 1,   /* demonstration palette VGA       */
-    SCENE_3 = 2,   /* demonstration des polices       */
-    SCENE_4 = 3,   /* affichage image RAW+PAL         */
-    SCENE_5 = 4,   /* scrolling de texte horizontal   */
-    SCENE_6 = 5,   /* rotozoom freedos                */
-    SCENE_7 = 6    /* demonstration primitives graphics*/
+    SCENE_0  = 0,
+    SCENE_1  = 1,
+    SCENE_2  = 2,
+    SCENE_3  = 3,
+    SCENE_4  = 4,
+    SCENE_5  = 5,
+    SCENE_6  = 6,
+    SCENE_7  = 7,
 } Scene;
 
 extern Scene currentScene;
