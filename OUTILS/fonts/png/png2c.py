@@ -9,7 +9,7 @@
 #   Pixel noir (valeur 0) = pixel allumé du glyphe.
 #   Pixel blanc (valeur ≠ 0) = fond transparent.
 #
-# Exemple : wy700-1.png → 512×128 px, 32 cols × 8 lignes, glyphes 16×16
+# Exemple : WY-700a.png → 512×128 px, 32 cols × 8 lignes, glyphes 16×16
 #   → 256 glyphes (codes 0x00 à 0xFF)
 #
 # Usage :
