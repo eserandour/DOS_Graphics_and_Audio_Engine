@@ -58,7 +58,7 @@ La démo boucle par défaut (`DEMO_LOOP 1` dans `main.c`). Pour qu'elle s'arrêt
 | `scene2` | 14 s | Palette VGA : cycle gauche/droite, interpolation vers la palette rose |
 | `scene3` | 36 s | Toutes les polices font1 (BIOS 8×8, Bank 8×8/8×16/16×16) |
 | `scene4` | 3 s | « HELLO / WORLD » avec la police sprite font2 (32×32) |
-| `scene5` | — | Scroller horizontal (crédits) puis scroller vertical Star Wars |
+| `scene5` | — | Scroller horizontal puis scroller vertical |
 | `scene6` | 10 s | Rotozoom sur `freedos.raw` en virgule fixe 16.16 |
 | `scene7` | 18 s | Toutes les primitives 2D (tunnel, spirale, plasma, rosace, rebonds) |
 
