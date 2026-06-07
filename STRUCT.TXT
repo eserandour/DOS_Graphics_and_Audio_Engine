@@ -1,94 +1,179 @@
 DEMO/
-+-- main.c
-+-- app.h                      flags globaux de l'application (quitRequested)
-+-- timer.h / timer.c          timer haute résolution (INT 08h, PIT à 70 Hz)
-+-- keyboard.h / keyboard.c    handler clavier (INT 09h) : Échap → quitRequested
-+-- video.h / video.c
-+-- palette.h / palette.c
++-- main.c                     point d'entrée, orchestrateur de la playlist
++-- app.h                      flag global quitRequested (Échap → sortie propre)
++-- timer.h / timer.c          timer haute résolution
+|                                PIT 8253 reprogrammé à TARGET_HZ (70 Hz)
+|                                ISR sur INT 08h chaînée au BIOS à 18,2 Hz
+|                                readTimer / elapsedTime / elapsedTimeMs / pause
++-- keyboard.h / keyboard.c    handler clavier ISR sur INT 09h
+|                                détecte Échap → quitRequested = 1
+|                                toutes les autres touches ignorées
++-- video.h / video.c          mode 13h, double-buffer, synchronisation VGA
+|                                SCREEN_WIDTH=320, SCREEN_HEIGHT=200, 1 octet/pixel
+|                                backbuffer far alloué par initBackbuffer()
+|                                flip() : copie backbuffer → VRAM (0xA000:0000)
+|                                waitVRetrace() : attend le retrace vertical (port 0x3DA)
+|                                setVideoMode / cursorOn / cursorOff
+|                                Macro OFFSET(x,y) = (y<<8)+(y<<6)+x (y*320 sans mul)
+|                                Le VGA rafraîchit à 70 Hz ; le rendu est bridé à
+|                                ~30 fps par les scènes (render_ms = 33 UL)
+|                                flip() ne se synchronise pas sur le vsync
++-- palette.h / palette.c      gestion de la palette DAC VGA 256 couleurs (6 bits/canal)
 |                                Palettes globales : defaultPalette, workingPalette,
 |                                paletteA, paletteB, grayPalette, pinkPalette,
 |                                rainbowPalette
 |                                Générateurs : buildGrayPalette / buildPinkPalette
-|                                              buildRainbowPalette (cercle chromatique HSV 360°)
-+-- graphics.h / graphics.c    primitives 2D en mode 13h — clipping intégré sur toutes les fonctions
+|                                              buildRainbowPalette (cercle HSV 360°)
+|                                Manipulation : setPalette / getPalette / copyPalette
+|                                               lerpPalette / fadePalette
+|                                               cyclePaletteLeft / cyclePaletteRight
+|                                savePalette : sauvegarde .pal (768 octets, format DAC natif)
++-- graphics.h / graphics.c    primitives 2D en mode 13h — clipping intégré partout
 |                                putPixel / getPixel / clearScreen
-|                                drawLine (Cohen-Sutherland + Bresenham)
+|                                drawLine (Cohen-Sutherland + Bresenham entier)
 |                                drawRect / drawRectFill (clamp des coordonnées)
 |                                drawPolygon / drawPolygonFill (scanline, even-odd rule)
-|                                drawCircle / drawCircleFill (mid-point circle, symétries 8)
-+-- image.h / image.c          chargement RAW/PAL, transparence par colorKey
-|                                loadImageRaw / loadImageRawKey
-|                                loadImageZoneRaw / loadImageZoneRawKey
-|                                loadScreenRaw, drawImage, drawScreen
-+-- font1.h / font1.c          moteur texte bitmap (BIOS ROM + Font1Bank)
-+-- font1/                     données des glyphes (générés par psf2c.py / ttf2c.py)
-|   +-- f1d8x8.c               police cp850-8x8  (PSF1, extrait de cp850-8x8.psf.gz)
-|   +-- f1d8x16.c              police cp850-8x16 (PSF1, extrait de cp850-8x16.psf.gz)
-|   +-- f1d16x16.c             police KiwiSoda Medium 16x16 (TTF converti par ttf2c.py)
-+-- font2.h / font2.c          texte par feuille de sprites (.raw)
-|                                police décrite par Font2Desc (fichier, dimensions,
-|                                plage de caractères, colorKey)
-|                                polices prédéfinies : FONT2_DESC_DEFAULT (font.raw 32x32)
-|                                                      FONT2_DESC_16X16_F2 (16X16_F2.raw 16x16)
-|                                API : font2Load / font2Free / font2IsLoaded
-|                                      font2DrawChar / font2DrawText / font2DrawTextCentered
-|                                      font2GetPixel
+|                                drawCircle / drawCircleFill (mid-point circle, 8 symétries)
++-- image.h / image.c          chargement d'images .raw / .pal
+|                                loadImagePal           → workingPalette + DAC
+|                                loadImageRaw           → backbuffer (image entière)
+|                                loadImageRawKey        → idem avec colorKey
+|                                loadScreenRaw          → raccourci 320x200
+|                                loadImageZoneRaw       → extraction d'une zone de sprite sheet
+|                                loadImageZoneRawKey    → idem avec colorKey
+|                                drawImage / drawScreen → palette + pixels en un appel
+|                                Codes retour : IMG_OK / IMG_ERR_PAL / IMG_ERR_RAW / IMG_ERR_READ
++-- font1.h / font1.c          moteur texte bitmap multi-tailles
+|                                Trois sources : ROM BIOS 8x8, Font1Bank 8x8, 8x16, 16x16
+|                                API unifiée via Font1* (BIOS ou Bank selon type)
+|                                font1InitBios / font1InitBank8x8 / 8x16 / 16x16
+|                                font1DrawChar / font1DrawText / font1DrawTextCentered
+|                                font1DefineChar8x8 / 8x16 / 16x16
+|                                font1FreeBank : libère la Font1Bank (struct + data far)
+|                                Macros CP850 : eAIGU, eGRAVE, eCIRC, aGRAVE, cCED…
++-- font1/                     données des glyphes — générées par les outils OUTILS/fonts/
+|   +-- f1_8x8.c               police cp850-8x8  (PSF1, source : cp850-8x8.psf.gz)
+|   +-- f1_8x16.c              police cp850-8x16 (PSF1, source : cp850-8x16.psf.gz)
+|   +-- f1_16x16.c             police WY-700a 16x16 (PNG, source : WY-700a.png, généré par png2c.py)
++-- font2.h / font2.c          texte par feuille de sprites .raw
+|                                police décrite par Font2Desc (chemin, dimensions, colorKey)
+|                                feuille chargée en far heap par font2Load()
+|                                Descripteurs prédéfinis :
+|                                  FONT2_DESC_DEFAULT   → font.raw    32x32 glyphes, 0x20-0x5B
+|                                  FONT2_DESC_16X16_F2  → 16X16_F2.raw 16x16 glyphes, 0x20-0x5B
+|                                font2Load / font2Free / font2IsLoaded
+|                                font2DrawChar / font2DrawText / font2DrawTextCentered
+|                                font2GetPixel : accès colonne/pixel pour le scroller
 +-- font2/                     feuilles de sprites pour font2
-|   +-- font.raw / font.pal    feuille de sprites 320x192, glyphes 32x32, 0x20-0x5B
-|   +-- font.png               aperçu PNG de la feuille
-|   +-- font_palette.png       aperçu de la palette VGA 6 bits
-|   +-- 16X16_F2.raw / 16X16_F2.pal  feuille de sprites 320x48, glyphes 16x16, 0x20-0x5B
-|   +-- 16X16_F2.png           aperçu PNG de la feuille
-|   +-- 16X16_F2_palette.png   aperçu de la palette VGA 6 bits
-+-- scene.h / scene.c          gestionnaire de scènes + flag quitRequested
+|   +-- font.raw / font.pal         feuille 320x192, glyphes 32x32, 0x20-0x5B, colorKey=127
+|   +-- font.png                    aperçu PNG de la feuille
+|   +-- font_palette.png            aperçu de la palette VGA 6 bits
+|   +-- 16X16_F2.raw / 16X16_F2.pal feuille 320x48, glyphes 16x16, 0x20-0x5B, colorKey=5
+|   +-- 16X16_F2.png                aperçu PNG de la feuille
+|   +-- 16X16_F2_palette.png        aperçu de la palette VGA 6 bits
++-- scene.h / scene.c          gestionnaire de scènes
+|                                enum Scene (SCENE_0 … SCENE_7)
+|                                setScene / runCurrentScene / sceneSignalEnd
+|                                callback onSceneEnd : la scène signale sa fin,
+|                                l'orchestrateur (main.c) décide de la suivante
 +-- scenes/
-|   +-- scene1.c    pixels aléatoires LCG, 5s, puis SCENE_2 (cut)
-|   +-- scene2.c    démonstration palette : statique, cycle droite/gauche, puis SCENE_3 (cut)
-|   +-- scene3.c    démonstration polices : BIOS 8x8, custom 8x8, 8x16, 16x16 — touche pour avancer
-|   +-- scene4.c    image font2 : HELLO WORLD, 3s, puis SCENE_5 (cut)
-|   +-- scene5.c    scrolling de texte horizontal (crédits)
-|                     feuille font2 préchargée en RAM far (_fmalloc)
-|                     blit colonne par colonne depuis le buffer RAM
-|                     vitesse : SCROLL_SPEED_MS (ms/pixel)
-|                     boucle infinie, touche pour revenir en SCENE_1
-|   +-- scene6.c    rotozoom sur freedos.raw (256x256)
-|                     texture chargée en far heap (65536 o)
-|                     table sinus 512 entrées en far heap (2048 o)
+|   +-- scene0.c    écran noir, 1 s (délimiteur capture vidéo)
+|   +-- scene1.c    pixels aléatoires LCG, 6 s
+|                     rendu toutes les 100 ms (LCG 32 bits sur les 64000 pixels)
+|                     fade in 1 s / fade out 3 s (fadePalette non bloquant)
+|   +-- scene2.c    démonstration palette VGA, 14 s, 4 phases :
+|                     phase 1 (1 s)  : grille 16×16 statique, palette par défaut
+|                     phase 2 (5 s)  : cycle droite (cyclePaletteRight)
+|                     phase 3 (5 s)  : cycle gauche (cyclePaletteLeft)
+|                     phase 4 (3 s)  : lerp workingPalette → pinkPalette
+|   +-- scene3.c    démonstration polices font1, 6 sous-écrans × 6 s = 36 s :
+|                     0 — font1Bios  8x8   (0..127)
+|                     1 — font1Bank  8x8   (0..255)
+|                     2 — font1Bank  8x16  (0..127)
+|                     3 — font1Bank  8x16  (128..255)
+|                     4 — font1Bank  16x16 (0..127)
+|                     5 — font1Bank  16x16 (128..255)
+|                     palette pinkPalette, fade in 2 s / fade out 1 s
+|                     libère les Font1Bank avant la fin (heap far pour scene6)
+|   +-- scene4.c    affichage HELLO / WORLD avec font2 (32x32), 3 s
+|                     "HELLO" centré à y=45, "WORLD" centré à y=122
+|   +-- scene5.c    scroller horizontal puis scroller vertical, deux parties enchaînées :
+|                     PARTIE A — scroll horizontal (crédits)
+|                       police 16X16_F2, défilement droite → gauche
+|                       algorithme colonne par colonne (blitColumn)
+|                       cadence tick-based : 1 px tous les HSCROLL_TICKS=2 ticks (35 px/s)
+|                       deux barres horizontales au-dessus et en-dessous du texte
+|                       fin après un passage complet du ruban
+|                     TRANSITION A→B
+|                       fade-out virgule fixe (fadePaletteInt5, facteur 64→0) en 600 ms
+|                     PARTIE B — scroll vertical (générique Star Wars)
+|                       lignes de texte défilant bas → haut, fenêtre centrée 240 px
+|                       algorithme ligne par ligne (blitVLine), centrage par chaîne
+|                       cadence VSCROLL_SPEED_MS=30 ms/pixel
+|                       fin quand la dernière ligne quitte le haut de l'écran
+|   +-- scene6.c    rotozoom sur freedos.raw (256x256), 10 s
+|                     texture découpée en deux blocs far de 32 768 o (tex0, tex1)
+|                       (_fmalloc 16 bits : 65 536 déborde → split en 2×32 768)
+|                     table sinus 512 entrées en far heap (2 048 o)
 |                     arithmétique virgule fixe 16.16 (pas de FPU)
-|                     zoom oscillant (×0.6..×2.4, cycle 4s)
-|                     rotation continue + fade-out palette en fin de scène
-|   +-- scene7.c    démonstration de toutes les primitives graphics (18s, 6 phases × 3s)
-|                     phase 1 : clearScreen + putPixel + getPixel (pluie de pixels)
-|                     phase 2 : drawLine (étoile tournante, clipping Cohen-Sutherland)
-|                     phase 3 : drawRect + drawRectFill (grille + contours concentriques)
-|                     phase 4 : drawCircle + drawCircleFill (ondes + centres hors écran)
-|                     phase 5 : drawPolygon + drawPolygonFill + getPixel (étoile, triangle)
-|                     phase 6 : composition finale — toutes les primitives simultanées
-|                     palette : rainbowPalette (cercle chromatique HSV 360°)
+|                     zoom oscillant ×0,6..×2,4, cycle 4 s
+|                     phase 1 (0..8 s) : rotozoom ~40 fps, rotation continue
+|                     phase 2 (8..10 s) : fade-out palette vers le noir
+|   +-- scene7.c    démonstration de toutes les primitives graphics, 18 s, 6 phases × 3 s
+|                     phase 1 : tunnel en anneaux (drawCircleFill + drawCircle)
+|                     phase 2 : spirale de Galton (drawLine)
+|                     phase 3 : plasma en damier morphant (drawRectFill + drawRect)
+|                     phase 4 : rosace de polygones (drawPolygon + drawPolygonFill)
+|                     phase 5 : rebond de polygones + traînée XOR (getPixel + putPixel)
+|                     phase 6 : composition — toutes les primitives simultanées
+|                     palette : rainbowPalette, fade in 1 s / fade out 1 s
 +-- images/
-|   +-- freedos.raw / freedos.pal       texture rotozoom 256x256, palette VGA 6 bits
+|   +-- freedos.raw / freedos.pal       texture rotozoom 256x256, palette DAC 6 bits
 |   +-- freedos.png                     aperçu PNG de la texture
 |   +-- freedos_palette.png             aperçu de la palette VGA 6 bits
+|   +-- default.pal / gray.pal / pink.pal / rainbow.pal   palettes prêtes à charger
 |
-+-- BUILD.BAT
-+-- LINK.RSP
-+-- CLEAN.BAT
-+-- CLEANALL.BAT
++-- BUILD.BAT          compile tous les .c avec wcc (modèle large, 8086, -os)
++-- LINK.RSP           liste des .obj passés à wlink → demo.exe
++-- CLEAN.BAT          supprime les .obj et .out
++-- CLEANALL.BAT       supprime .obj, .out et demo.exe
 |
 +-- OUTILS/
-    +-- fonteditor.htm    éditeur visuel de polices bitmap 8x8, 8x16 et 16x16 (HTML/JS)
-    +-- ascii_cp850.py    affiche la table ASCII CP850 dans un terminal DOS/DJGPP
-    +-- ascii_cp850.txt   table ASCII CP850 pré-rendue en texte
     +-- vgatool.py        convert  : produit .raw + .pal + _palette.png en une passe
     |                     palette  : visualise un fichier .pal existant en .png
-    |                     couleurs palette PNG fidèles au rendu VGA 6 bits
-    +-- psf/              polices Linux PSF et outil de conversion
-    |   +-- psf2c.py      extrait une police Linux PSF1/PSF2 en .c et .png
-    |   +-- cp850-8x8.psf.gz    police CP850 8x8 pixels (source pour f1d8x8.c)
-    |   +-- cp850-8x8.png       aperçu des glyphes 8x8
-    |   +-- cp850-8x16.psf.gz   police CP850 8x16 pixels (source pour f1d8x16.c)
-    |   +-- cp850-8x16.png      aperçu des glyphes 8x16
-    +-- ttf/              police TrueType et outil de conversion
-        +-- ttf2c.py      convertit une police TTF en tableau .c pour Font1Bank
-        +-- KiwiSoda.ttf  police TrueType source (source pour f1d16x16.c)
-        +-- KiwiSoda_16x16.png  aperçu des glyphes 16x16 générés
+    |                     Rendu VGA 6 bits fidèle (composantes × 4 pour affichage)
+    +-- fonts/
+        +-- ascii_cp850.py    affiche la table ASCII CP850 dans un terminal
+        +-- ascii_cp850.txt   table ASCII CP850 pré-rendue en texte
+        +-- fonteditor.htm    éditeur visuel de polices bitmap 8x8, 8x16, 16x16 (HTML/JS)
+        |
+        +-- psf/              polices Linux PSF et outil de conversion
+        |   +-- psf2c.py      convertit une police PSF1/PSF2 (éventuellement .gz)
+        |   |                   en f1_WxH.c (données C) + police.png (aperçu)
+        |   |                   options : -o REPERTOIRE, --encoding cp850|cp437|unicode
+        |   |                   encodage : cp850 (défaut), cp437, unicode (chr(i) / U+XXXX)
+        |   +-- cp850-8x8.psf.gz    police CP850 8x8  (source de font1/f1_8x8.c)
+        |   +-- cp850-8x8.png       aperçu des 256 glyphes 8x8
+        |   +-- cp850-8x16.psf.gz   police CP850 8x16 (source de font1/f1_8x16.c)
+        |   +-- cp850-8x16.png      aperçu des 256 glyphes 8x16
+        |
+        +-- ttf/              polices TrueType et outil de conversion
+        |   +-- ttf2c.py      convertit une police TTF en f1_WxH.c + police_WxH.png
+        |   |                   options : -s WxH, -o REPERTOIRE, --range, --chars,
+        |   |                             --encoding cp850|cp437|unicode, --preview
+        |   |                   encodage : cp850 (défaut), cp437, unicode (chr(i) / U+XXXX)
+        |   +-- KiwiSoda.ttf        police TrueType source (→ font1/f1_16x16.c)
+        |   +-- KiwiSoda_16x16.png  aperçu des 256 glyphes 16x16 générés
+        |   +-- Mecha.ttf           police TrueType alternative
+        |   +-- Mecha_16x16.png     aperçu Mecha 16x16
+        |
+        +-- png/              polices bitmap en PNG et outil de conversion
+            +-- png2c.py      convertit un PNG de police bitmap en f1_WxH.c
+            |                   format PNG : grille N_COLS × N_ROWS, pixel noir = allumé
+            |                   auto-détection de la grille à partir des dimensions du PNG
+            |                   options : -s WxH (défaut 16x16), -o REPERTOIRE,
+            |                             --cols N, --start 0xXX,
+            |                             --encoding cp850|cp437|unicode, --preview
+            |                   encodage : cp850 (défaut), cp437, unicode (chr(i) / U+XXXX)
+            +-- WY-700a.png         police WY-700 bitmap 512x128 (32×8 glyphes 16x16)
+            +-- WY-700b.png         variante WY-700b
