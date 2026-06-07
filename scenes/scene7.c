@@ -1,5 +1,5 @@
 /* =========================================================
-   SCENE7.C — Scène : démonstration des primitives graphics
+   SCENE7.C — Scène : tunnel, plasma, morphing et spirales
    =========================================================
    Mise en oeuvre de TOUTES les fonctions de graphics.h :
      putPixel, getPixel, clearScreen
@@ -8,21 +8,20 @@
      drawCircle, drawCircleFill
 
    Structure en 6 phases de 3 s chacune (18 s au total) :
-     Phase 1 — clearScreen + putPixel (pluie de pixels)
-     Phase 2 — drawLine  (étoile de lignes depuis le centre)
-     Phase 3 — drawRect / drawRectFill (grille de rectangles)
-     Phase 4 — drawCircle / drawCircleFill (ondes concentriques)
-     Phase 5 — drawPolygon / drawPolygonFill (étoile 5 branches
-                + triangle tournant, getPixel pour XOR)
-     Phase 6 — composition finale : toutes les primitives
-                animées ensemble
+     Phase 1 — Tunnel en anneaux (drawCircleFill + drawCircle)
+     Phase 2 — Spirale de Galton (drawLine depuis le centre)
+     Phase 3 — Plasma en damier morphant (drawRectFill)
+     Phase 4 — Flocon de Koch simplifié (drawPolygon + lignes)
+     Phase 5 — Rebond de polygones (drawPolygonFill + getPixel
+                pour effet de traînée XOR)
+     Phase 6 — Composition : spirale + tunnel + ornements
 
    Fade in 1 s / fade out 1 s sur la durée totale.
    Aucune gestion clavier (sauf Échap global via INT 09h).
    Cible : Open Watcom 1.9, FreeDOS, mode 13h (320x200).
    ========================================================= */
 
-#include <math.h>       /* sin, cos, fabs                  */
+#include <math.h>       /* sin, cos, fabs, sqrt            */
 #include <stdlib.h>     /* abs                             */
 #include "timer.h"
 #include "video.h"
@@ -55,237 +54,287 @@ static unsigned char hueColor(int offset)
     return (unsigned char)(((unsigned int)(offset & 0xFF) % 255) + 1);
 }
 
+/* Calcule les sommets d'un polygone régulier à n côtés. */
+static void regularPolygon(int cx, int cy, int r, float angle,
+                            int n, int *pts)
+{
+    int i;
+    float a;
+    for (i = 0; i < n; i++)
+    {
+        a         = angle + (float)i * (TWO_PI / (float)n);
+        pts[i*2]  = cx + (int)((float)cos(a) * (float)r);
+        pts[i*2+1]= cy + (int)((float)sin(a) * (float)r);
+    }
+}
+
 /* =========================================================
-   PHASE 1 — clearScreen + putPixel
+   PHASE 1 — Tunnel en anneaux
    =========================================================
-   Affiche une "pluie de pixels" : chaque frame on efface et
-   on dessine N pixels aléatoires avec putPixel.
-   getPixel est utilisé pour n'écrire que sur le fond noir
-   (pixel inchangé si déjà coloré → effet d'accumulation). */
+   Des anneaux de cercles remplis, du plus grand au plus
+   petit, créent l'illusion d'un tunnel qui avance.
+   Des cercles de contour intercalés renforcent la profondeur.
+   Deux centres secondaires hors-écran valident le clipping. */
 
 static void phase1(unsigned long t_ms)
 {
-    /* LCG interne (state persistant entre appels). */
-    static unsigned long lcg = 12345UL;
-    int i, x, y;
+    float progress = (float)t_ms / (float)PHASE_MS;
+    float offset   = progress * 30.0f;   /* défilement du tunnel */
+    int   i, r;
+    int   nRings  = 14;
+    int   maxR    = 220;
     unsigned char col;
-    /* Nombre de pixels proportionnel au temps (montée en charge). */
-    int n = 200 + (int)((float)t_ms / (float)PHASE_MS * 1800.0f);
 
     clearScreen(0);
 
-    for (i = 0; i < n; i++)
+    /* Anneaux du tunnel : du plus grand vers le plus petit
+       pour que les petits (proches) soient au-dessus. */
+    for (i = nRings; i >= 0; i--)
     {
-        lcg = lcg * 1664525UL + 1013904223UL;
-        x   = (int)((lcg >> 16) % SCREEN_WIDTH);
-        lcg = lcg * 1664525UL + 1013904223UL;
-        y   = (int)((lcg >> 16) % SCREEN_HEIGHT);
-        lcg = lcg * 1664525UL + 1013904223UL;
-        col = hueColor((int)(lcg >> 16));
+        /* Le rayon oscille légèrement pour donner un effet
+           de pulsation. */
+        r = (int)((float)(i + 1) * (float)maxR / (float)(nRings + 1)
+            + (float)sin(progress * TWO_PI + (float)i * 0.4f) * 4.0f
+            - offset);
+        if (r <= 0) continue;
 
-        /* getPixel : on ne redessine pas un pixel déjà posé. */
-        if (getPixel(x, y) == 0)
-            putPixel(x, y, col);
+        col = hueColor(i * 18 + (int)(progress * 80.0f));
+        drawCircleFill(CX, CY, r, col);
+
+        /* Contour sombre entre chaque anneau. */
+        if (r > 4)
+            drawCircle(CX, CY, r - 2, 1);
+    }
+
+    /* Deux sources secondaires partiellement hors écran,
+       clippées par drawCircle / drawCircleFill. */
+    for (i = 0; i < 5; i++)
+    {
+        r   = 15 + i * 20 + (int)(progress * 30.0f);
+        col = hueColor(i * 47 + 130 + (int)(progress * 60.0f));
+        drawCircle(-30, -20, r, col);
+        drawCircle(SCREEN_WIDTH + 20, SCREEN_HEIGHT + 10, r, col);
     }
 }
 
 /* =========================================================
-   PHASE 2 — drawLine
+   PHASE 2 — Spirale de lignes
    =========================================================
-   Étoile de 36 rayons depuis le centre, qui tourne dans
-   le temps. Les rayons dépassent les bords : le clipping
-   de drawLine (Cohen-Sutherland) les tronque proprement. */
+   Des lignes partent du centre vers des points disposés
+   sur une spirale d'Archimède qui tourne dans le temps.
+   Une seconde spirale en sens inverse crée un entrelacement.
+   Le clipping de drawLine gère les extrémités hors-écran. */
 
 static void phase2(unsigned long t_ms)
 {
-    float angle;
-    float progress = (float)t_ms / (float)PHASE_MS;   /* 0→1 */
-    float baseAngle = progress * TWO_PI;               /* rotation */
+    float progress  = (float)t_ms / (float)PHASE_MS;
+    float baseAngle = progress * TWO_PI * 2.0f;
     int   i, x2, y2;
-    int   len = 200;   /* longueur des rayons (dépasse l'écran) */
+    int   nSpokes   = 48;
+    float rStep     = 160.0f / (float)nSpokes;
     unsigned char col;
+    float a, r;
 
     clearScreen(0);
 
-    for (i = 0; i < 36; i++)
+    /* Spirale principale : le rayon augmente avec l'index. */
+    for (i = 0; i < nSpokes; i++)
     {
-        angle = baseAngle + (float)i * (TWO_PI / 36.0f);
-        x2    = CX + (int)((float)cos(angle) * (float)len);
-        y2    = CY + (int)((float)sin(angle) * (float)len);
-
-        /* Teinte progressive sur les 36 rayons. */
-        col = hueColor(i * 7 + (int)(progress * 80.0f));
+        a   = baseAngle + (float)i * (TWO_PI / 12.0f);
+        r   = (float)(i + 1) * rStep;
+        x2  = CX + (int)((float)cos(a) * r);
+        y2  = CY + (int)((float)sin(a) * r);
+        col = hueColor(i * 5 + (int)(progress * 100.0f));
         drawLine(CX, CY, x2, y2, col);
     }
 
-    /* Deuxième couche : 18 rayons plus courts en sens inverse. */
-    for (i = 0; i < 18; i++)
+    /* Spirale inverse, rayons plus courts, teinte décalée. */
+    for (i = 0; i < nSpokes / 2; i++)
     {
-        angle = -baseAngle * 0.5f + (float)i * (TWO_PI / 18.0f);
-        x2    = CX + (int)((float)cos(angle) * 80.0f);
-        y2    = CY + (int)((float)sin(angle) * 80.0f);
-        col   = hueColor(i * 14 + 128 + (int)(progress * 60.0f));
+        a   = -baseAngle * 0.6f + (float)i * (TWO_PI / 8.0f);
+        r   = 20.0f + (float)i * (90.0f / (float)(nSpokes / 2));
+        x2  = CX + (int)((float)cos(a) * r);
+        y2  = CY + (int)((float)sin(a) * r);
+        col = hueColor(i * 11 + 128 + (int)(progress * 70.0f));
         drawLine(CX, CY, x2, y2, col);
     }
+
+    /* Petit disque central pour cacher le fouillis au centre. */
+    col = hueColor((int)(progress * 255.0f));
+    drawCircleFill(CX, CY, 8, col);
 }
 
 /* =========================================================
-   PHASE 3 — drawRect + drawRectFill
+   PHASE 3 — Plasma en damier morphant
    =========================================================
-   Grille de rectangles pleins au fond, puis contours animés
-   qui se déplacent. Certains rectangles dépassent les bords
-   pour valider le clipping de drawRectFill. */
+   Une grille de rectangles pleins dont la couleur est
+   modulée par une combinaison de sinus (effet plasma).
+   La taille des cellules pulse légèrement.
+   Quelques contours drawRect animent la surface. */
 
 static void phase3(unsigned long t_ms)
 {
     float progress = (float)t_ms / (float)PHASE_MS;
+    float t        = progress * TWO_PI;
     int   i, j;
-    int   x, y, size;
+    int   cols = 16, rows = 10;
+    int   cw, ch;   /* taille d'une cellule */
+    int   x, y;
+    float fx, fy, val;
     unsigned char col;
-    /* Déplacement horizontal pour les rectangles de contour. */
-    int   shift = (int)(progress * 60.0f) - 30;
+
+    /* Taille de cellule qui pulse (14 à 22 px de large). */
+    cw = 18 + (int)((float)sin(t * 1.5f) * 4.0f);
+    ch = 18 + (int)((float)cos(t * 1.3f) * 4.0f);
 
     clearScreen(0);
 
-    /* Fond : grille 8x5 de rectangles pleins (10 px de marge). */
-    for (j = 0; j < 5; j++)
-        for (i = 0; i < 8; i++)
+    for (j = 0; j < rows + 2; j++)
+        for (i = 0; i < cols + 2; i++)
         {
-            x   = 10 + i * 38;
-            y   = 10 + j * 36;
-            col = hueColor(i * 8 + j * 33 + (int)(progress * 40.0f));
-            drawRectFill(x, y, x + 30, y + 28, col);
+            x  = i * cw - cw / 2;
+            y  = j * ch - ch / 2;
+            fx = (float)i / (float)cols;
+            fy = (float)j / (float)rows;
+
+            /* Plasma : somme de 4 ondes sinusoïdales. */
+            val = (float)sin(fx * 6.0f + t)
+                + (float)sin(fy * 5.0f - t * 1.2f)
+                + (float)sin((fx + fy) * 4.0f + t * 0.8f)
+                + (float)sin((float)sqrt((double)
+                    ((fx - 0.5f) * (fx - 0.5f)
+                   + (fy - 0.5f) * (fy - 0.5f))) * 10.0f - t);
+
+            /* val ∈ [-4, 4] → color ∈ [1, 255] */
+            col = hueColor((int)((val + 4.0f) * 31.0f));
+            drawRectFill(x, y, x + cw - 2, y + ch - 2, col);
         }
 
-    /* Contours : série de rectangles concentriques centrés,
-       qui s'élargissent avec le temps (clipping en jeu
-       pour les grands). */
-    for (i = 0; i < 12; i++)
+    /* Contours animés par-dessus le plasma. */
+    for (i = 0; i < 5; i++)
     {
-        size = 10 + i * 14 + (int)(progress * 30.0f);
-        col  = hueColor(i * 21 + (int)(progress * 50.0f));
-        drawRect(CX - size + shift, CY - size,
-                 CX + size + shift, CY + size, col);
+        int margin = 8 + i * 14 + (int)((float)sin(t + (float)i) * 6.0f);
+        col = hueColor(i * 50 + (int)(progress * 80.0f));
+        drawRect(margin, margin,
+                 SCREEN_WIDTH  - 1 - margin,
+                 SCREEN_HEIGHT - 1 - margin, col);
     }
 }
 
 /* =========================================================
-   PHASE 4 — drawCircle + drawCircleFill
+   PHASE 4 — Rosace de polygones
    =========================================================
-   Ondes concentriques : cercles remplis de couleurs
-   différentes dont le rayon croit avec le temps, puis des
-   cercles de contour en surimpression.
-   Des cercles partiellement hors écran valident le clipping. */
+   Des polygones réguliers de 3 à 8 côtés, disposés en
+   couronne autour du centre, tournent en sens alternés.
+   Au centre, un polygone plus grand rempli bat comme un
+   cœur. getPixel est utilisé pour éviter d'écraser les
+   contours déjà tracés (dessin sélectif). */
 
 static void phase4(unsigned long t_ms)
 {
     float progress = (float)t_ms / (float)PHASE_MS;
-    int   i, r;
-    int   maxR = 220;   /* rayon max > écran → clipping activé */
+    float angle    = progress * TWO_PI;
+    int   i, n;
+    int   pts[16]; /* max 8 sommets × 2 coords */
+    int   cx2, cy2;
+    float a;
     unsigned char col;
+
+    /* Rayon pulsant du polygone central (3 battements/scène). */
+    int   rCenter = 35 + (int)((float)sin(angle * 3.0f) * 12.0f);
 
     clearScreen(0);
 
-    /* Onde principale : cercles remplis concentriques du
-       plus grand au plus petit (ordre de dessin important). */
-    for (i = 12; i >= 0; i--)
-    {
-        r   = (int)(progress * (float)maxR) - i * 15;
-        col = hueColor(i * 19 + (int)(progress * 120.0f));
-        if (r > 0)
-            drawCircleFill(CX, CY, r, col);
-    }
+    /* Polygone central rempli (hexagone pulsant). */
+    regularPolygon(CX, CY, rCenter, angle, 6, pts);
+    col = hueColor((int)(progress * 180.0f));
+    drawPolygonFill(pts, 6, col);
+    col = hueColor((int)(progress * 180.0f) + 128);
+    drawPolygon(pts, 6, col);
 
-    /* Second centre en bas à gauche (partiellement hors écran). */
-    for (i = 0; i < 8; i++)
-    {
-        r   = 20 + i * 18 + (int)(progress * 40.0f);
-        col = hueColor(i * 31 + 64 + (int)(progress * 80.0f));
-        drawCircle(-20, 220, r, col);   /* clipping Cohen-S. */
-    }
-
-    /* Cercles de contour animés par-dessus. */
+    /* Couronne de 6 polygones de 3 à 8 côtés. */
     for (i = 0; i < 6; i++)
     {
-        r   = 20 + i * 22 + (int)((float)sin(progress * TWO_PI + i) * 10.0f);
-        col = hueColor(i * 41 + 200 + (int)(progress * 60.0f));
-        drawCircle(CX, CY, r, col);
+        n   = 3 + i;           /* triangle, carré, … octogone */
+        a   = angle + (float)i * (TWO_PI / 6.0f);
+        cx2 = CX + (int)((float)cos(a) * 75.0f);
+        cy2 = CY + (int)((float)sin(a) * 75.0f);
+
+        /* Rotation locale alternée. */
+        regularPolygon(cx2, cy2, 22,
+                       (i % 2 == 0) ? angle * 1.5f : -angle * 1.5f,
+                       n, pts);
+        col = hueColor(i * 40 + (int)(progress * 120.0f));
+        drawPolygonFill(pts, n, col);
+        col = hueColor(i * 40 + (int)(progress * 120.0f) + 80);
+        drawPolygon(pts, n, col);
+    }
+
+    /* Deuxième couronne externe, polygones plus petits,
+       partiellement hors écran → clipping activé. */
+    for (i = 0; i < 8; i++)
+    {
+        n   = 3 + (i % 4);
+        a   = -angle * 0.8f + (float)i * (TWO_PI / 8.0f);
+        cx2 = CX + (int)((float)cos(a) * 140.0f);
+        cy2 = CY + (int)((float)sin(a) * 140.0f);
+        regularPolygon(cx2, cy2, 14, angle * 2.0f, n, pts);
+        col = hueColor(i * 31 + 60 + (int)(progress * 90.0f));
+        drawPolygon(pts, n, col);
     }
 }
 
 /* =========================================================
-   PHASE 5 — drawPolygon + drawPolygonFill + getPixel
+   PHASE 5 — Rebond de polygones + traînée XOR
    =========================================================
-   - Étoile 5 branches remplie au centre.
-   - Triangle tournant en contour.
-   - getPixel utilisé pour un effet XOR : chaque pixel
-     déjà coloré est réécrit avec sa couleur complémentaire
-     (décalage de 128 dans la palette). */
-
-/* Calcule les sommets d'une étoile à 5 branches. */
-static void starPoints(int cx, int cy,
-                       int r_out, int r_in,
-                       float angle, int *pts)
-{
-    int i;
-    float a;
-    for (i = 0; i < 5; i++)
-    {
-        /* Sommet externe. */
-        a           = angle + (float)i * (TWO_PI / 5.0f);
-        pts[i*4+0]  = cx + (int)((float)cos(a) * (float)r_out);
-        pts[i*4+1]  = cy + (int)((float)sin(a) * (float)r_out);
-        /* Sommet interne (entre deux branches). */
-        a           = angle + ((float)i + 0.5f) * (TWO_PI / 5.0f);
-        pts[i*4+2]  = cx + (int)((float)cos(a) * (float)r_in);
-        pts[i*4+3]  = cy + (int)((float)sin(a) * (float)r_in);
-    }
-}
+   Trois polygones (triangle, carré, pentagone) rebondissent
+   sur les bords de l'écran.
+   getPixel + putPixel : chaque pixel des contours est relu
+   et sa couleur complémentée (effet de traînée lumineuse). */
 
 static void phase5(unsigned long t_ms)
 {
-    float progress  = (float)t_ms / (float)PHASE_MS;
-    float angle     = progress * TWO_PI;
-    /* pts_star : 10 sommets interleaved (externe/interne). */
-    int   pts_star[20];
-    /* pts_tri  : 3 sommets de triangle. */
-    int   pts_tri[6];
+    float progress = (float)t_ms / (float)PHASE_MS;
+    float t        = progress * TWO_PI;
+    int   i, pts[10];
     unsigned char col, existing;
-    int   i, x, y;
-    float a;
+    int   x, y;
+
+    /* Positions des trois polygones (trajectoires sinusoïdales
+       indépendantes pour éviter la synchronisation). */
+    int cx1 = 60  + (int)((float)cos(t * 1.1f)         * 55.0f);
+    int cy1 = 60  + (int)((float)sin(t * 0.9f)         * 40.0f);
+    int cx2 = CX  + (int)((float)cos(t * 0.7f + 1.0f)  * 90.0f);
+    int cy2 = CY  + (int)((float)sin(t * 1.3f + 0.5f)  * 60.0f);
+    int cx3 = 240 + (int)((float)cos(t * 1.5f + 2.0f)  * 50.0f);
+    int cy3 = 140 + (int)((float)sin(t * 0.8f + 1.5f)  * 40.0f);
 
     clearScreen(0);
 
-    /* Étoile remplie (10 sommets = 5 externes + 5 internes
-       en alternance). */
-    starPoints(CX, CY, 80, 35, angle, pts_star);
-    col = hueColor((int)(progress * 150.0f));
-    drawPolygonFill(pts_star, 10, col);
+    /* Triangle rempli. */
+    regularPolygon(cx1, cy1, 38, t * 1.2f, 3, pts);
+    col = hueColor((int)(progress * 160.0f));
+    drawPolygonFill(pts, 3, col);
+    drawPolygon(pts, 3, 255);
 
-    /* Contour de l'étoile avec une teinte décalée. */
-    col = hueColor((int)(progress * 150.0f) + 128);
-    drawPolygon(pts_star, 10, col);
+    /* Carré rempli. */
+    regularPolygon(cx2, cy2, 32, t * 0.8f, 4, pts);
+    col = hueColor((int)(progress * 160.0f) + 85);
+    drawPolygonFill(pts, 4, col);
+    drawPolygon(pts, 4, 255);
 
-    /* Triangle tournant en sens inverse. */
-    for (i = 0; i < 3; i++)
+    /* Pentagone rempli. */
+    regularPolygon(cx3, cy3, 28, -t * 1.4f, 5, pts);
+    col = hueColor((int)(progress * 160.0f) + 170);
+    drawPolygonFill(pts, 5, col);
+    drawPolygon(pts, 5, 255);
+
+    /* Effet getPixel / XOR palette sur une bande horizontale
+       médiane : complémentation des couleurs présentes. */
+    for (x = 0; x < SCREEN_WIDTH; x++)
     {
-        a            = -angle * 0.7f + (float)i * (TWO_PI / 3.0f);
-        pts_tri[i*2]   = CX + (int)((float)cos(a) * 110.0f);
-        pts_tri[i*2+1] = CY + (int)((float)sin(a) * 110.0f);
-    }
-    col = hueColor((int)(progress * 90.0f) + 85);
-    drawPolygonFill(pts_tri, 3, col);
-    drawPolygon(pts_tri, 3, 255);   /* contour blanc */
-
-    /* Effet getPixel / XOR palette :
-       Pour chaque pixel de la diagonale principale, on lit
-       sa couleur et on la "complémente" en décalant l'index
-       de 127 dans la palette arc-en-ciel. */
-    for (i = 0; i < SCREEN_WIDTH; i++)
-    {
-        x        = i;
-        y        = (int)((float)i * (float)SCREEN_HEIGHT
-                          / (float)SCREEN_WIDTH);
+        y        = CY + (int)((float)sin((float)x * 0.08f + t) * 20.0f);
+        if (y < 0 || y >= SCREEN_HEIGHT) continue;
         existing = getPixel(x, y);
         if (existing != 0)
         {
@@ -298,83 +347,76 @@ static void phase5(unsigned long t_ms)
 /* =========================================================
    PHASE 6 — Composition finale
    =========================================================
-   Toutes les primitives en même temps :
-   - fond : clearScreen puis drawRectFill en bordure
-   - étoile de lignes (drawLine)
-   - cercle rempli central (drawCircleFill)
-   - cercles de contour (drawCircle)
-   - polygone rempli (drawPolygonFill)
-   - rectangle de contour (drawRect)
-   - putPixel pour des petits ornements */
+   Toutes les primitives ensemble :
+   - Tunnel d'anneaux en arrière-plan (drawCircleFill)
+   - Spirale de lignes par-dessus (drawLine)
+   - Polygone central pulsant (drawPolygonFill)
+   - Couronne de cercles de contour (drawCircle)
+   - Cadre de rectangles imbriqués (drawRect)
+   - Ornements putPixel sur une ellipse
+   ========================================================= */
 
 static void phase6(unsigned long t_ms)
 {
     float progress = (float)t_ms / (float)PHASE_MS;
     float angle    = progress * TWO_PI;
-    int   i, pts[8];
-    int   x2, y2;
-    unsigned char col;
+    int   i, x2, y2, r, pts[12];
     float a;
+    unsigned char col;
 
     clearScreen(0);
 
-    /* Bordure : 4 rectangles pleins fins sur les bords. */
-    col = hueColor((int)(progress * 30.0f));
-    drawRectFill(0, 0, SCREEN_WIDTH-1, 3, col);
-    drawRectFill(0, SCREEN_HEIGHT-4, SCREEN_WIDTH-1, SCREEN_HEIGHT-1, col);
-    drawRectFill(0, 0, 3, SCREEN_HEIGHT-1, col);
-    drawRectFill(SCREEN_WIDTH-4, 0, SCREEN_WIDTH-1, SCREEN_HEIGHT-1, col);
-
-    /* Rayons (drawLine) depuis le centre. */
-    for (i = 0; i < 24; i++)
+    /* --- Fond : tunnel simplifié (5 anneaux) --- */
+    for (i = 5; i >= 0; i--)
     {
-        a   = angle + (float)i * (TWO_PI / 24.0f);
-        x2  = CX + (int)((float)cos(a) * 250.0f);
-        y2  = CY + (int)((float)sin(a) * 250.0f);
-        col = hueColor(i * 10 + (int)(progress * 60.0f));
+        r   = 30 + i * 32 + (int)((float)sin(angle + (float)i) * 5.0f);
+        col = hueColor(i * 22 + (int)(progress * 60.0f));
+        drawCircleFill(CX, CY, r, col);
+    }
+
+    /* --- Spirale de 30 rayons --- */
+    for (i = 0; i < 30; i++)
+    {
+        a   = angle * 1.5f + (float)i * (TWO_PI / 10.0f);
+        r   = 40 + i * 5;
+        x2  = CX + (int)((float)cos(a) * (float)r);
+        y2  = CY + (int)((float)sin(a) * (float)r);
+        col = hueColor(i * 8 + (int)(progress * 80.0f));
         drawLine(CX, CY, x2, y2, col);
     }
 
-    /* Disque central (drawCircleFill). */
+    /* --- Polygone central rempli (5 côtés pulsant) --- */
+    r = 28 + (int)((float)sin(angle * 4.0f) * 8.0f);
+    regularPolygon(CX, CY, r, angle * 2.0f, 5, pts);
     col = hueColor(200 + (int)(progress * 55.0f));
-    drawCircleFill(CX, CY, 40, col);
+    drawPolygonFill(pts, 5, col);
+    drawPolygon(pts, 5, 255);
 
-    /* Anneau de cercles de contour (drawCircle). */
-    for (i = 0; i < 8; i++)
+    /* --- Couronne de 6 cercles de contour orbitaux --- */
+    for (i = 0; i < 6; i++)
     {
-        a   = angle * 1.3f + (float)i * (TWO_PI / 8.0f);
-        x2  = CX + (int)((float)cos(a) * 70.0f);
-        y2  = CY + (int)((float)sin(a) * 70.0f);
-        col = hueColor(i * 32 + (int)(progress * 80.0f));
-        drawCircle(x2, y2, 18, col);
+        a   = angle * 1.2f + (float)i * (TWO_PI / 6.0f);
+        x2  = CX + (int)((float)cos(a) * 65.0f);
+        y2  = CY + (int)((float)sin(a) * 65.0f);
+        col = hueColor(i * 42 + (int)(progress * 90.0f));
+        drawCircle(x2, y2, 14, col);
     }
 
-    /* Losange rempli (drawPolygonFill, 4 sommets). */
+    /* --- Cadres de rectangles imbriqués animés --- */
+    for (i = 0; i < 4; i++)
     {
-        int size = 25 + (int)((float)sin(angle * 2.0f) * 10.0f);
-        pts[0] = CX;        pts[1] = CY - size;
-        pts[2] = CX + size; pts[3] = CY;
-        pts[4] = CX;        pts[5] = CY + size;
-        pts[6] = CX - size; pts[7] = CY;
-        col    = hueColor(80 + (int)(progress * 120.0f));
-        drawPolygonFill(pts, 4, col);
+        int m = 4 + i * 8 + (int)((float)sin(angle + (float)i * 0.8f) * 5.0f);
+        col   = hueColor(i * 60 + (int)(progress * 50.0f));
+        drawRect(m, m, SCREEN_WIDTH - 1 - m, SCREEN_HEIGHT - 1 - m, col);
     }
 
-    /* Rectangle de contour animé (drawRect). */
+    /* --- Ornements putPixel : ellipse de points --- */
+    for (i = 0; i < 80; i++)
     {
-        int margin = 15 + (int)((float)sin(angle) * 8.0f);
-        col = hueColor(170 + (int)(progress * 40.0f));
-        drawRect(margin, margin,
-                 SCREEN_WIDTH-1-margin, SCREEN_HEIGHT-1-margin, col);
-    }
-
-    /* Ornements putPixel : couronne de points autour du disque. */
-    for (i = 0; i < 64; i++)
-    {
-        a   = angle * 2.0f + (float)i * (TWO_PI / 64.0f);
-        x2  = CX + (int)((float)cos(a) * 50.0f);
-        y2  = CY + (int)((float)sin(a) * 50.0f);
-        col = hueColor(i * 4 + (int)(progress * 100.0f));
+        a   = angle * 3.0f + (float)i * (TWO_PI / 80.0f);
+        x2  = CX + (int)((float)cos(a) * 90.0f);
+        y2  = CY + (int)((float)sin(a) * 45.0f);
+        col = hueColor(i * 3 + (int)(progress * 120.0f));
         putPixel(x2, y2, col);
     }
 }
@@ -432,8 +474,6 @@ void scene7(void)
 
     lastRender = now;
 
-    /* clearScreen appelé dans chaque phase, sauf transition
-       (on efface ici si la phase vient de changer). */
     if (phase != lastPhase)
     {
         clearScreen(0);

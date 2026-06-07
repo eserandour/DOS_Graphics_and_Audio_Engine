@@ -1,5 +1,5 @@
 /* =========================================================
-   SCENE3.C — Scène : Démonstration des polices
+   SCENE3.C — Scène : Démonstration des polices font1
    =========================================================
    6 sous-écrans affichés automatiquement, 3 s chacun :
      0 — font1Bios  8x8    (0..127)

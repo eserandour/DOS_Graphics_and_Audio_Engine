@@ -5,7 +5,6 @@
      - "HELLO" centre horizontalement a y=84
      - "WORLD" en (0, 120) pour illustrer le positionnement
        libre (non centre) de font2DrawText.
-
    Duree : 3 secondes
    Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
