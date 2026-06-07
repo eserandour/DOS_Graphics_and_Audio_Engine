@@ -46,7 +46,6 @@
 #include "timer.h"
 #include "video.h"
 #include "palette.h"
-#include "image.h"
 #include "scene.h"
 #include "app.h"
 
@@ -290,8 +289,8 @@ void scene6(void)
         tex1 = (unsigned char far *)_fmalloc(TEX_HALF);
         if (!tex1) { freeScene6(); quitRequested = 1; return; }
 
-        err = loadImagePal("images\\freedos.pal");
-        if (err != IMG_OK) { freeScene6(); quitRequested = 1; return; }
+        err = loadPalette("images\\freedos.pal");
+        if (err != PAL_OK) { freeScene6(); quitRequested = 1; return; }
 
         if (!loadTexture()) { freeScene6(); quitRequested = 1; return; }
 

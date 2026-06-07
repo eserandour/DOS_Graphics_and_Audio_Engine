@@ -41,7 +41,6 @@
 
 #include "video.h"
 #include "palette.h"
-#include "image.h"
 #include "timer.h"
 #include "graphics.h"
 #include "font2.h"
@@ -300,8 +299,8 @@ void scene5(void)
         initialized = 1;
         state       = 0;
 
-        err = loadImagePal("font2\\16X16_F2.pal");
-        if (err != IMG_OK) { quitRequested = 1; return; }
+        err = loadPalette("font2\\16X16_F2.pal");
+        if (err != PAL_OK) { quitRequested = 1; return; }
 
         /* Charger la police horizontale. */
         if (!font2Load(&hFont)) { quitRequested = 1; return; }

@@ -12,7 +12,7 @@
 #include "timer.h"
 #include "video.h"
 #include "graphics.h"
-#include "image.h"
+#include "palette.h"
 #include "font2.h"
 #include "scene.h"
 #include "app.h"
@@ -32,8 +32,8 @@ void scene4(void)
         int err;
 
         initialized = 1;
-        err = loadImagePal("font2\\font.pal");
-        if (err != IMG_OK) { quitRequested = 1; return; }
+        err = loadPalette("font2\\font.pal");
+        if (err != PAL_OK) { quitRequested = 1; return; }
         if (!font2Load(&s4_font)) { quitRequested = 1; return; }
         clearScreen(0);
         font2DrawTextCentered(&s4_font, "HELLO", 45);
