@@ -14,6 +14,9 @@
 #   python3 ttf2c.py POLICE.ttf --preview                → aperçu ASCII dans le terminal
 #   python3 ttf2c.py POLICE.ttf --range 20-7E           → plage hex seulement
 #   python3 ttf2c.py POLICE.ttf --chars "ABC"           → caractères spécifiques
+#   python3 ttf2c.py POLICE.ttf --encoding cp850        → commentaires en CP850 (défaut)
+#   python3 ttf2c.py POLICE.ttf --encoding cp437        → commentaires en CP437
+#   python3 ttf2c.py POLICE.ttf --encoding unicode      → commentaires caractère Unicode direct
 #
 # Sortie :
 #   <nom>_WxH.c   → bloc prêt à intégrer dans font1/
@@ -107,10 +110,11 @@ def render_char(face, code: int, glyph_w: int, glyph_h: int) -> list:
 
 
 # ==============================================================================
-# Glyphes de commentaire (CP850)
+# Glyphes de commentaire selon l'encodage
 # ==============================================================================
 
-CP437_GLYPHS = {
+# Caractères de contrôle CP437 (0x00-0x1F et 0x7F) : communs à CP437 et CP850
+CP437_CONTROL_GLYPHS = {
     0: '∅',
     1: '☺', 2: '☻', 3: '♥', 4: '♦', 5: '♣', 6: '♠',
     7: '•', 8: '◘', 9: '○', 10: '◙', 11: '♂', 12: '♀',
@@ -120,11 +124,33 @@ CP437_GLYPHS = {
     31: '▼', 127: '⌂'
 }
 
-def get_char_label(i: int) -> str:
-    if i in CP437_GLYPHS:
-        return CP437_GLYPHS[i]
+def get_char_label(i: int, encoding: str = 'cp850') -> str:
+    """
+    Retourne le label (caractère lisible) pour le code i selon l'encodage choisi.
+
+    encoding : 'cp850'   → CP850 pour 0x20-0xFF, CP437 pour les contrôles (0x00-0x1F, 0x7F)
+               'cp437'   → CP437 pour 0x20-0xFF, CP437 pour les contrôles
+               'unicode' → caractère Unicode direct (chr(i))
+    """
+    if encoding == 'unicode':
+        import unicodedata
+        try:
+            ch = chr(i)
+            # Catégories non imprimables : Cc (contrôle), Cs (surrogate), Co (usage privé), Cn (non assigné)
+            if unicodedata.category(ch) in ('Cc', 'Cs', 'Co', 'Cn'):
+                return f'U+{i:04X}'
+            return ch
+        except Exception:
+            return f'U+{i:04X}'
+
+    # CP437 ou CP850 : les contrôles (0x00-0x1F et 0x7F) sont identiques
+    if i in CP437_CONTROL_GLYPHS:
+        return CP437_CONTROL_GLYPHS[i]
+
+    # Zone imprimable : décodage selon l'encodage demandé
+    codec = 'cp437' if encoding == 'cp437' else 'cp850'
     try:
-        return bytes([i]).decode('cp850')
+        return bytes([i]).decode(codec)
     except Exception:
         return f'0x{i:02X}'
 
@@ -134,7 +160,8 @@ def get_char_label(i: int) -> str:
 # ==============================================================================
 
 def generate_c_block(face, char_range, glyph_w: int, glyph_h: int,
-                     array_name: str, font_file: str, preview: bool) -> str:
+                     array_name: str, font_file: str, preview: bool,
+                     encoding: str = 'cp850') -> str:
     """
     Génère un fichier C autonome f1dWxH.c contenant _initFont1_WxH().
     Format identique à psf2c.py (macro font1DefineChar*).
@@ -150,6 +177,7 @@ def generate_c_block(face, char_range, glyph_w: int, glyph_h: int,
     lines.append(f"   Police : {family} {style} — {ttf_basename}.ttf")
     lines.append(f"   Taille : {glyph_w}×{glyph_h} pixels")
     lines.append(f"   Généré par ttf2c.py")
+    lines.append(f"   Encodage commentaires : {encoding.upper()}")
     if glyph_w <= 8:
         lines.append(f"   Chaque octet = une ligne de {glyph_w} pixels.")
         lines.append( "   Bit 7 (0x80) = pixel le plus à gauche.")
@@ -174,9 +202,9 @@ def generate_c_block(face, char_range, glyph_w: int, glyph_h: int,
         rows = render_char(face, code, glyph_w, glyph_h)
 
         if preview:
-            _ascii_preview(code, rows, glyph_w, glyph_h)
+            _ascii_preview(code, rows, glyph_w, glyph_h, encoding)
 
-        label = get_char_label(code)
+        label = get_char_label(code, encoding)
 
         if glyph_w <= 8:
             # Format : font1DefineChar8x8 / font1DefineChar8x16
@@ -206,8 +234,9 @@ def generate_c_block(face, char_range, glyph_w: int, glyph_h: int,
     return "\n".join(lines)
 
 
-def _ascii_preview(code: int, rows: list, glyph_w: int, glyph_h: int) -> None:
-    label = get_char_label(code)
+def _ascii_preview(code: int, rows: list, glyph_w: int, glyph_h: int,
+                   encoding: str = 'cp850') -> None:
+    label = get_char_label(code, encoding)
     msb = 0x8000 if glyph_w > 8 else 0x80
     print(f"  Char 0x{code:02X} ({label!r}):")
     for r in rows:
@@ -291,7 +320,8 @@ def generate_png(face, char_range, glyph_w: int, glyph_h: int,
 # ==============================================================================
 
 def process(ttf_path: str, glyph_w: int, glyph_h: int,
-            out_base: str, char_range, preview: bool) -> None:
+            out_base: str, char_range, preview: bool,
+            encoding: str = 'cp850') -> None:
 
     face = freetype.Face(ttf_path)
     face.set_pixel_sizes(0, glyph_h)
@@ -302,6 +332,7 @@ def process(ttf_path: str, glyph_w: int, glyph_h: int,
     print(f"Taille    : {glyph_w}×{glyph_h} px")
     print(f"Ascender  : {face.size.ascender  >> 6} px")
     print(f"Descender : {face.size.descender >> 6} px")
+    print(f"Encodage  : {encoding.upper()}")
 
     array_name = f"font1Bank{glyph_w}x{glyph_h}"
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -313,7 +344,7 @@ def process(ttf_path: str, glyph_w: int, glyph_h: int,
 
     # --- Fichier .c ---
     c_code = generate_c_block(face, char_list, glyph_w, glyph_h,
-                               array_name, ttf_path, preview)
+                               array_name, ttf_path, preview, encoding)
     with open(c_file, "w", encoding="utf-8") as f:
         f.write(c_code)
     print(f"  .c  : {c_file}")
@@ -391,6 +422,8 @@ Exemples :
   python3 ttf2c.py Mecha.ttf --range 20-7E          # ASCII imprimable seulement
   python3 ttf2c.py Mecha.ttf --chars "AaBbCc"       # caractères spécifiques
   python3 ttf2c.py Mecha.ttf --preview              # aperçu ASCII terminal
+  python3 ttf2c.py Mecha.ttf --encoding cp437        # commentaires en CP437
+  python3 ttf2c.py Mecha.ttf --encoding unicode      # commentaires U+XXXX NOM
 """
     )
     parser.add_argument("sources", nargs="+",
@@ -411,6 +444,12 @@ Exemples :
         help="Convertir uniquement les caractères de cette chaîne (ex. 'ABCabc')")
     parser.add_argument("--preview", action="store_true",
         help="Affiche un aperçu ASCII de chaque glyphe dans le terminal")
+    parser.add_argument("--encoding", default="cp850",
+        choices=["cp850", "cp437", "unicode"],
+        metavar="ENC",
+        help="Encodage utilisé pour les commentaires de caractères dans le .c généré. "
+             "Valeurs : cp850 (défaut), cp437, unicode. "
+             "Exemple : --encoding cp437")
 
     args = parser.parse_args()
 
@@ -466,7 +505,8 @@ Exemples :
 
         print(f"\n→ {ttf_path}")
         try:
-            process(ttf_path, glyph_w, glyph_h, out_base, char_range, args.preview)
+            process(ttf_path, glyph_w, glyph_h, out_base, char_range, args.preview,
+                    args.encoding)
             ok += 1
         except FileNotFoundError:
             print(f"  Erreur : fichier introuvable", file=sys.stderr)
