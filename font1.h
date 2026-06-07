@@ -51,28 +51,27 @@
      "\x82" "e"  et non  "\x82e"  (lu comme un seul code 0x82E) */
 
 /* Minuscules accentuées */
-#define eAIGU   "\x82"   /* é  CP850 0x82 */
-#define eGRAVE  "\x8A"   /* è  CP850 0x8A */
-#define eCIRC   "\x88"   /* ê  CP850 0x88 */
-#define eTREMA  "\x89"   /* ë  CP850 0x89 */
-#define aGRAVE  "\x85"   /* à  CP850 0x85 */
-#define aCIRC   "\x83"   /* â  CP850 0x83 */
-#define aTREMA  "\x84"   /* ä  CP850 0x84 */
-#define uGRAVE  "\x97"   /* ù  CP850 0x97 */
-#define uCIRC   "\x96"   /* û  CP850 0x96 */
-#define uTREMA  "\x81"   /* ü  CP850 0x81 */
-#define iCIRC   "\x8C"   /* î  CP850 0x8C */
-#define iTREMA  "\x8B"   /* ï  CP850 0x8B */
-#define oCIRC   "\x93"   /* ô  CP850 0x93 */
-#define oTREMA  "\x94"   /* ö  CP850 0x94 */
-#define cCED    "\x87"   /* ç  CP850 0x87 */
-
+#define eAIGU   "\x82"   /* é   CP850 : 0x82   Unicode : 0xE9 */
+#define eGRAVE  "\x8A"   /* è   CP850 : 0x8A   Unicode : 0xE8 */
+#define eCIRC   "\x88"   /* ê   CP850 : 0x88   Unicode : 0xEA */
+#define eTREMA  "\x89"   /* ë   CP850 : 0x89   Unicode : 0xEB */
+#define aGRAVE  "\x85"   /* à   CP850 : 0x85   Unicode : 0xE0 */
+#define aCIRC   "\x83"   /* â   CP850 : 0x83   Unicode : 0xE2 */
+#define aTREMA  "\x84"   /* ä   CP850 : 0x84   Unicode : 0xE4 */
+#define uGRAVE  "\x97"   /* ù   CP850 : 0x97   Unicode : 0xF9 */
+#define uCIRC   "\x96"   /* û   CP850 : 0x96   Unicode : 0xFB */
+#define uTREMA  "\x81"   /* ü   CP850 : 0x81   Unicode : 0xFC */
+#define iCIRC   "\x8C"   /* î   CP850 : 0x8C   Unicode : 0xEE */
+#define iTREMA  "\x8B"   /* ï   CP850 : 0x8B   Unicode : 0xEF */
+#define oCIRC   "\x93"   /* ô   CP850 : 0x93   Unicode : 0xF4 */
+#define oTREMA  "\x94"   /* ö   CP850 : 0x94   Unicode : 0xF6 */
+#define cCED    "\x87"   /* ç   CP850 : 0x87   Unicode : 0xE7 */
 /* Majuscules accentuées */
-#define EAIGU   "\x90"   /* É  CP850 0x90 */
-#define ATREMA  "\x8E"   /* Ä  CP850 0x8E */
-#define OTREMA  "\x99"   /* Ö  CP850 0x99 */
-#define UTREMA  "\x9A"   /* Ü  CP850 0x9A */
-#define CCED    "\x80"   /* Ç  CP850 0x80 */
+#define EAIGU   "\x90"   /* É   CP850 : 0x90   Unicode : 0xC9 */
+#define ATREMA  "\x8E"   /* Ä   CP850 : 0x8E   Unicode : 0xC4 */
+#define OTREMA  "\x99"   /* Ö   CP850 : 0x99   Unicode : 0xD6 */
+#define UTREMA  "\x9A"   /* Ü   CP850 : 0x9A   Unicode : 0xDC */
+#define CCED    "\x80"   /* Ç   CP850 : 0x80   Unicode : 0xC7 */
 
 /* Nombre maximum de glyphes par Font1Bank.
    256 = ensemble complet des caractères (0 à 255). */
