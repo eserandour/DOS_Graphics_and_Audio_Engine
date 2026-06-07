@@ -7,9 +7,9 @@ file palette.obj
 file graphics.obj
 file image.obj
 file font1.obj
-file f1d8x8.obj
-file f1d8x16.obj
-file f1d16x16.obj
+file f1_8x8.obj
+file f1_8x16.obj
+file f1_16x16.obj
 file font2.obj
 file scene.obj
 file scene0.obj

@@ -6,9 +6,9 @@ wcc -ml -0 -os -I. palette.c > palette.out
 wcc -ml -0 -os -I. graphics.c > graphics.out
 wcc -ml -0 -os -I. image.c > image.out
 wcc -ml -0 -os -I. font1.c > font1.out
-wcc -ml -0 -os -I. font1\f1d8x8.c > f1d8x8.out
-wcc -ml -0 -os -I. font1\f1d8x16.c > f1d8x16.out
-wcc -ml -0 -os -I. font1\f1d16x16.c > f1d16x16.out
+wcc -ml -0 -os -I. font1\f1_8x8.c > f1_8x8.out
+wcc -ml -0 -os -I. font1\f1_8x16.c > f1_8x16.out
+wcc -ml -0 -os -I. font1\f1_16x16.c > f1_16x16.out
 wcc -ml -0 -os -I. font2.c > font2.out
 wcc -ml -0 -os -I. scene.c > scene.out
 wcc -ml -0 -os -I. scenes\scene0.c > scene0.out
