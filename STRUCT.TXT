@@ -159,6 +159,10 @@ DEMO/
 +-- CLEANALL.BAT       supprime .obj, .out et demo.exe
 |
 +-- OUTILS/
+    +-- DUMPPAL.C         utilitaire autonome : passe en mode 13h, lit les 256 couleurs
+    |                       du DAC VGA (palette BIOS par defaut) et ecrit DEFAULT.PAL
+    |                       (768 octets bruts, format natif du projet).
+    |                       Compilation : wcl -ml -0 -os -I.. DUMPPAL.C ..\palette.c ..\video.c
     +-- vgatool.py        convert  : produit .raw + .pal + _palette.png en une passe
     |                     palette  : visualise un fichier .pal existant en .png
     |                     Rendu VGA 6 bits fidele (composantes x 4 pour affichage)
