@@ -106,4 +106,7 @@ Le dossier `OUTILS/` contient des utilitaires Python et un outil C autonome :
 
 ## Licence
 
-Ce projet est distribué sans licence explicite. Contactez l'auteur pour toute réutilisation.
+Ce projet est distribué sous licence **GNU General Public License v3.0** (GPL-3.0).  
+Vous êtes libre de l'utiliser, le modifier et le redistribuer, à condition que tout travail dérivé soit également publié sous GPL-3.0.
+
+Voir le fichier [`LICENSE`](LICENSE) pour le texte complet.
