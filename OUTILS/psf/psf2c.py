@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-# Usage: python3 psf2c.py FICHIER.psf[.gz]      → un seul fichier
-#        python3 psf2c.py *.psf *.psf.gz        → plusieurs fichiers
-#        python3 psf2c.py REPERTOIRE/           → tous les .psf/.psf.gz du répertoire
+# Usage: python3 psf2c.py FICHIER.psf[.gz]               → un seul fichier
+#        python3 psf2c.py *.psf *.psf.gz                 → plusieurs fichiers
+#        python3 psf2c.py REPERTOIRE/                    → tous les .psf/.psf.gz du répertoire
+#        python3 psf2c.py FICHIER.psf --encoding cp850   → commentaires en CP850 (défaut)
+#        python3 psf2c.py FICHIER.psf --encoding cp437   → commentaires en CP437
+#        python3 psf2c.py FICHIER.psf --encoding unicode → commentaires caractère Unicode direct
 # Génère FICHIER.c et FICHIER.png à partir d'une police PSF1 ou PSF2
 
 # Dans Debian, chercher un fichier .psf.gz dans /usr/share/consolefonts/ par exemple
@@ -11,6 +14,7 @@ import os
 import gzip
 import glob
 import struct
+import argparse
 
 PSF_SUFFIXES = ('.psf', '.psf.gz')
 
@@ -71,32 +75,57 @@ def _read_psf2(data):
 
     return chars, char_width, char_height
 
-def generate_c_file(chars, char_width, char_height, array_name, font_file, psf_version):
+# ==============================================================================
+# Glyphes de commentaire selon l'encodage
+# ==============================================================================
+
+CP437_CONTROL_GLYPHS = {
+    0: '∅',
+    1: '☺', 2: '☻', 3: '♥', 4: '♦', 5: '♣', 6: '♠',
+    7: '•', 8: '◘', 9: '○', 10: '◙', 11: '♂', 12: '♀',
+    13: '♪', 14: '♫', 15: '☼', 16: '►', 17: '◄', 18: '↕',
+    19: '‼', 20: '¶', 21: '§', 22: '▬', 23: '↨', 24: '↑',
+    25: '↓', 26: '→', 27: '←', 28: '∟', 29: '↔', 30: '▲',
+    31: '▼', 127: '⌂'
+}
+
+def get_char_label(i: int, encoding: str = 'cp850') -> str:
+    """
+    Retourne le label (caractère lisible) pour le code i selon l'encodage choisi.
+
+    encoding : 'cp850'   → CP850 pour 0x20-0xFF, CP437 pour les contrôles (0x00-0x1F, 0x7F)
+               'cp437'   → CP437 pour 0x20-0xFF, CP437 pour les contrôles
+               'unicode' → caractère Unicode direct (chr(i)), U+XXXX si non imprimable
+    """
+    if encoding == 'unicode':
+        import unicodedata
+        try:
+            ch = chr(i)
+            if unicodedata.category(ch) in ('Cc', 'Cs', 'Co', 'Cn'):
+                return f'U+{i:04X}'
+            return ch
+        except Exception:
+            return f'U+{i:04X}'
+
+    # CP437 ou CP850 : les contrôles (0x00-0x1F et 0x7F) sont identiques
+    if i in CP437_CONTROL_GLYPHS:
+        return CP437_CONTROL_GLYPHS[i]
+
+    # Zone imprimable : décodage selon l'encodage demandé
+    codec = 'cp437' if encoding == 'cp437' else 'cp850'
+    try:
+        return bytes([i]).decode(codec)
+    except Exception:
+        return f'0x{i:02X}'
+
+# ==============================================================================
+# Génération du fichier C
+# ==============================================================================
+
+def generate_c_file(chars, char_width, char_height, array_name, font_file,
+                    psf_version, encoding='cp850'):
     """Génère un fichier C complet au même format que ttf2c.py."""
     font_name = os.path.basename(psf_basename(font_file))
-
-    # Glyphes graphiques DOS (CP437) pour les codes de contrôle 0x00-0x1F et 0x7F
-    cp437_glyphs = {
-        0: '∅',
-        1: '☺', 2: '☻', 3: '♥', 4: '♦', 5: '♣', 6: '♠',
-        7: '•', 8: '◘', 9: '○', 10: '◙', 11: '♂', 12: '♀',
-        13: '♪', 14: '♫', 15: '☼', 16: '►', 17: '◄', 18: '↕',
-        19: '‼', 20: '¶', 21: '§', 22: '▬', 23: '↨', 24: '↑',
-        25: '↓', 26: '→', 27: '←', 28: '∟', 29: '↔', 30: '▲',
-        31: '▼', 127: '⌂'
-    }
-    cp850_special = { 0xF0: '─' }
-
-    def get_char(i):
-        if i in cp850_special:
-            return cp850_special[i]
-        elif i in cp437_glyphs:
-            return cp437_glyphs[i]
-        else:
-            try:
-                return bytes([i]).decode('cp850')
-            except Exception:
-                return f'0x{i:02X}'
 
     lines = []
     lines.append('#include "../font1.h"')
@@ -106,6 +135,7 @@ def generate_c_file(chars, char_width, char_height, array_name, font_file, psf_v
     lines.append(f"   Format : PSF version {psf_version}")
     lines.append(f"   Taille : {char_width}×{char_height} pixels")
     lines.append(f"   Généré par psf2c.py")
+    lines.append(f"   Encodage commentaires : {encoding.upper()}")
     if char_width <= 8:
         lines.append(f"   Chaque octet = une ligne de {char_width} pixels.")
         lines.append( "   Bit 7 (0x80) = pixel le plus à gauche.")
@@ -131,13 +161,17 @@ def generate_c_file(chars, char_width, char_height, array_name, font_file, psf_v
 
     for i, (raw, char_data) in enumerate(zip(raw_lines, chars)):
         hex_comment  = f"/* 0x{i:02X} */"
-        char_comment = f"/* {get_char(i)} */"
+        char_comment = f"/* {get_char_label(i, encoding)} */"
         line = f"{raw:<{max_len}}; {hex_comment}    {char_comment}"
         lines.append(line)
 
     lines.append("}")
     lines.append("")
     return "\n".join(lines)
+
+# ==============================================================================
+# Génération du PNG
+# ==============================================================================
 
 def generate_png(chars, char_width, char_height, output_path, font_name="", psf_version=2):
     try:
@@ -206,6 +240,10 @@ def generate_png(chars, char_width, char_height, output_path, font_name="", psf_
     img.save(output_path)
     print(f"  PNG : {output_path}")
 
+# ==============================================================================
+# Collecte des fichiers PSF
+# ==============================================================================
+
 def collect_files(args):
     """Retourne la liste de tous les fichiers PSF à traiter."""
     files = []
@@ -221,7 +259,11 @@ def collect_files(args):
     seen = set()
     return [f for f in files if not (f in seen or seen.add(f))]
 
-def process_file(font_file):
+# ==============================================================================
+# Traitement d'un fichier
+# ==============================================================================
+
+def process_file(font_file, encoding='cp850'):
     base_name = psf_basename(font_file)
     png_file = base_name + ".png"
 
@@ -230,7 +272,8 @@ def process_file(font_file):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     c_file     = os.path.join(script_dir, f"f1d{char_width}x{char_height}.c")
     array_name = f"font1Bank{char_width}x{char_height}"
-    c_code = generate_c_file(chars, char_width, char_height, array_name, font_file, psf_version)
+    c_code = generate_c_file(chars, char_width, char_height, array_name,
+                              font_file, psf_version, encoding)
     with open(c_file, "w", encoding="utf-8") as f:
         f.write(c_code)
     print(f"  .c  : {c_file}")
@@ -238,13 +281,35 @@ def process_file(font_file):
     font_name = os.path.basename(base_name)
     generate_png(chars, char_width, char_height, png_file, font_name, psf_version)
 
-def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} FICHIER.psf[.gz] [FICHIER2 ...] [REPERTOIRE/]",
-              file=sys.stderr)
-        sys.exit(1)
+# ==============================================================================
+# Point d'entrée
+# ==============================================================================
 
-    files = collect_files(sys.argv[1:])
+def main():
+    parser = argparse.ArgumentParser(
+        description="Convertit un ou plusieurs fichiers PSF en données C + PNG.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Exemples :
+  python3 psf2c.py cp850-8x16.psf.gz                    # CP850 (défaut)
+  python3 psf2c.py cp850-8x16.psf.gz --encoding cp437   # commentaires en CP437
+  python3 psf2c.py cp850-8x16.psf.gz --encoding unicode # commentaires Unicode direct
+  python3 psf2c.py /usr/share/consolefonts/             # tous les PSF d'un répertoire
+"""
+    )
+    parser.add_argument("sources", nargs="+",
+        metavar="FICHIER_ou_REPERTOIRE",
+        help="Fichier(s) .psf/.psf.gz ou répertoire(s) à scanner")
+    parser.add_argument("--encoding", default="cp850",
+        choices=["cp850", "cp437", "unicode"],
+        metavar="ENC",
+        help="Encodage utilisé pour les commentaires de caractères dans le .c généré. "
+             "Valeurs : cp850 (défaut), cp437, unicode. "
+             "Exemple : --encoding cp437")
+
+    args = parser.parse_args()
+
+    files = collect_files(args.sources)
     if not files:
         print("Aucun fichier .psf ou .psf.gz trouvé.", file=sys.stderr)
         sys.exit(1)
@@ -253,7 +318,7 @@ def main():
     for font_file in files:
         print(f"\n→ {font_file}")
         try:
-            process_file(font_file)
+            process_file(font_file, args.encoding)
             ok += 1
         except FileNotFoundError:
             print(f"  Erreur : fichier introuvable", file=sys.stderr)
