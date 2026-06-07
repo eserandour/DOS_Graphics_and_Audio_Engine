@@ -21,7 +21,7 @@ SceneEndHandler onSceneEnd = 0;   /* NULL par défaut — à brancher dans main.
 typedef void (*SceneFunc)(void);
 
 static SceneFunc scenes[] = {
-	scene0,
+    scene0,
     scene1,
     scene2,
     scene3,
