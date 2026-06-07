@@ -57,16 +57,14 @@ static int f2strlen(const char *s)
 int font2Load(Font2Desc *fd)
 {
     FILE *f;
+    unsigned char rowBuf[320];
     unsigned long row;
-    unsigned long sheet_size;
     unsigned char far *dst;
 
     if (fd->sheet) return 1;   /* deja en RAM */
 
-    sheet_size = (unsigned long)fd->sheet_w * (unsigned long)fd->sheet_h;
-
-    /* _fmalloc prend unsigned long sur Watcom large model. */
-    fd->sheet = (unsigned char far *)_fmalloc(sheet_size);
+    fd->sheet = (unsigned char far *)_fmalloc(
+        (unsigned long)fd->sheet_w * (unsigned long)fd->sheet_h);
     if (!fd->sheet) return 0;
 
     f = fopen(fd->path, "rb");
@@ -75,7 +73,7 @@ int font2Load(Font2Desc *fd)
     dst = fd->sheet;
     for (row = 0; row < (unsigned long)fd->sheet_h; row++)
     {
-        if (fread(dst, 1, (unsigned)fd->sheet_w, f)
+        if (fread(rowBuf, 1, (unsigned)fd->sheet_w, f)
                 != (unsigned)fd->sheet_w)
         {
             fclose(f);
@@ -83,6 +81,7 @@ int font2Load(Font2Desc *fd)
             fd->sheet = NULL;
             return 0;
         }
+        _fmemcpy(dst, rowBuf, (unsigned)fd->sheet_w);
         dst += fd->sheet_w;
     }
 

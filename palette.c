@@ -2,11 +2,11 @@
    PALETTE.C — Gestion de la palette VGA 256 couleurs
    ========================================================= */
 
-#include <stdio.h>    /* FILE, fopen, fwrite, fclose       */
-#include <string.h>   /* memcpy, _fmemset                  */
-#include <conio.h>    /* outp, inp                         */
+#include <stdio.h>    /* FILE, fopen, fread, fwrite, fclose */
+#include <string.h>   /* memcpy, _fmemset                   */
+#include <conio.h>    /* outp, inp                          */
 #include "palette.h"
-#include "video.h"    /* waitVRetrace                      */
+#include "video.h"    /* waitVRetrace                       */
 
 /* =========================================================
    PALETTES GLOBALES
@@ -22,6 +22,82 @@ Color paletteB[256];         /* palette cible pour lerp     */
 Color grayPalette[256];      /* dégradé noir → blanc        */
 Color pinkPalette[256];      /* noir + rouge → blanc        */
 Color rainbowPalette[256];   /* cercle chromatique HSV 360° */
+
+/* =========================================================
+   FICHIER .PAL
+   ========================================================= */
+
+/* Charge un fichier .pal (768 octets : 256 × R/G/B sur 6 bits)
+   dans workingPalette et envoie immédiatement la palette
+   au DAC VGA.
+
+   Format .pal : 256 entrées × 3 octets (R, G, B).
+   Chaque composante est sur 6 bits (0-63), format natif
+   du DAC VGA (pas de conversion nécessaire).
+
+   Pourquoi un buffer intermédiaire ?
+   La structure Color peut contenir du padding selon
+   l'alignement choisi par le compilateur. On lit dans un
+   tableau d'octets contigu garantissant l'absence de trous,
+   puis on affecte champ par champ dans la structure.
+
+   Retourne PAL_OK, PAL_ERR_FILE ou PAL_ERR_READ. */
+int loadPalette(const char *palFile)
+{
+    FILE *f;
+    unsigned char buf[768];
+    int i;
+
+    f = fopen(palFile, "rb");
+    if (!f) return PAL_ERR_FILE;
+
+    if (fread(buf, 1, 768, f) != 768)
+    {
+        fclose(f);
+        return PAL_ERR_READ;
+    }
+
+    fclose(f);
+
+    for (i = 0; i < 256; i++)
+    {
+        workingPalette[i].r = buf[i * 3];
+        workingPalette[i].g = buf[i * 3 + 1];
+        workingPalette[i].b = buf[i * 3 + 2];
+    }
+
+    setPalette(workingPalette);
+    return PAL_OK;
+}
+
+/* Écrit 256 triplets R/G/B (6 bits) dans un fichier binaire.
+   Format identique à celui des .pal du projet : 768 octets
+   bruts, sans en-tête, compatibles avec vgatool.py.
+   Retourne 1 si succès, 0 si échec (fopen ou fwrite). */
+int savePalette(const Color *pal, const char *filename)
+{
+    FILE *f;
+    int i;
+    unsigned char buf[3];
+
+    f = fopen(filename, "wb");
+    if (!f) return 0;
+
+    for (i = 0; i < 256; i++)
+    {
+        buf[0] = pal[i].r;
+        buf[1] = pal[i].g;
+        buf[2] = pal[i].b;
+        if (fwrite(buf, 1, 3, f) != 3)
+        {
+            fclose(f);
+            return 0;
+        }
+    }
+
+    fclose(f);
+    return 1;
+}
 
 /* =========================================================
    ACCÈS MATÉRIEL DAC VGA
@@ -76,10 +152,10 @@ void getPalette(Color *pal)
     int i;
     for (i = 0; i < 256; i++)
     {
-        outp(0x3C7, i);            /* sélectionner l'index  */
-        pal[i].r = inp(0x3C9);    /* lire rouge            */
-        pal[i].g = inp(0x3C9);    /* lire vert             */
-        pal[i].b = inp(0x3C9);    /* lire bleu             */
+        outp(0x3C7, i);           /* sélectionner l'index  */
+        pal[i].r = inp(0x3C9);   /* lire rouge            */
+        pal[i].g = inp(0x3C9);   /* lire vert             */
+        pal[i].b = inp(0x3C9);   /* lire bleu             */
     }
 }
 
@@ -227,50 +303,16 @@ void buildRainbowPalette(Color *pal)
 
         switch (hi)
         {
-            case 0: r = 1.0f; g = f;    b = 0.0f; break;
-            case 1: r = 1.0f-f; g = 1.0f; b = 0.0f; break;
-            case 2: r = 0.0f; g = 1.0f; b = f;    break;
-            case 3: r = 0.0f; g = 1.0f-f; b = 1.0f; break;
-            case 4: r = f;    g = 0.0f; b = 1.0f; break;
-            default:r = 1.0f; g = 0.0f; b = 1.0f-f; break;
+            case 0: r = 1.0f;   g = f;      b = 0.0f;   break;
+            case 1: r = 1.0f-f; g = 1.0f;   b = 0.0f;   break;
+            case 2: r = 0.0f;   g = 1.0f;   b = f;      break;
+            case 3: r = 0.0f;   g = 1.0f-f; b = 1.0f;   break;
+            case 4: r = f;      g = 0.0f;   b = 1.0f;   break;
+            default:r = 1.0f;   g = 0.0f;   b = 1.0f-f; break;
         }
 
         pal[i].r = (unsigned char)(r * 63.0f);
         pal[i].g = (unsigned char)(g * 63.0f);
         pal[i].b = (unsigned char)(b * 63.0f);
     }
-}
-
-/* =========================================================
-   SAUVEGARDE PALETTE
-   =========================================================
-   Écrit 256 triplets R/G/B (6 bits) dans un fichier binaire.
-   Format identique à celui des .pal du projet : 768 octets
-   bruts, sans en-tête, compatibles avec vgatool.py et
-   loadImageRaw.
-   ========================================================= */
-
-int savePalette(const Color *pal, const char *filename)
-{
-    FILE *f;
-    int   i;
-    unsigned char buf[3];
-
-    f = fopen(filename, "wb");
-    if (!f) return 0;
-
-    for (i = 0; i < 256; i++)
-    {
-        buf[0] = pal[i].r;
-        buf[1] = pal[i].g;
-        buf[2] = pal[i].b;
-        if (fwrite(buf, 1, 3, f) != 3)
-        {
-            fclose(f);
-            return 0;
-        }
-    }
-
-    fclose(f);
-    return 1;
 }

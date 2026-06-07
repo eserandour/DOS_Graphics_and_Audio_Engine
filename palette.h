@@ -60,6 +60,30 @@ extern Color pinkPalette[256];
 extern Color rainbowPalette[256];
 
 /* ---------------------------------------------------------
+   Codes de retour de loadPalette
+   --------------------------------------------------------- */
+
+#define PAL_OK        0   /* succès                        */
+#define PAL_ERR_FILE  1   /* impossible d'ouvrir le .pal   */
+#define PAL_ERR_READ  2   /* lecture incomplète            */
+
+/* ---------------------------------------------------------
+   Fonctions — Fichier .pal
+   --------------------------------------------------------- */
+
+/* Charge un fichier .pal (768 octets : 256 × R/G/B sur 6 bits)
+   dans workingPalette et envoie immédiatement la palette
+   au DAC VGA.
+   Ne touche pas au backbuffer.
+   Retourne PAL_OK, PAL_ERR_FILE ou PAL_ERR_READ. */
+int loadPalette(const char *palFile);
+
+/* Sauvegarde une palette dans un fichier .pal (768 octets bruts :
+   256 triplets R/G/B sur 6 bits, même format que les .pal du projet).
+   Retourne 1 si succès, 0 si échec (fopen ou fwrite). */
+int savePalette(const Color *pal, const char *filename);
+
+/* ---------------------------------------------------------
    Fonctions — Accès matériel DAC
    --------------------------------------------------------- */
 
@@ -134,10 +158,5 @@ void buildPinkPalette(Color *pal);
    Les décalages de 128 dans l'index donnent la couleur
    complémentaire exacte, utile pour les effets de contraste. */
 void buildRainbowPalette(Color *pal);
-
-/* Sauvegarde une palette dans un fichier .pal (768 octets bruts :
-   256 triplets R/G/B sur 6 bits, même format que les .pal du projet).
-   Retourne 1 si succès, 0 si échec (fopen ou fwrite). */
-int savePalette(const Color *pal, const char *filename);
 
 #endif /* PALETTE_H */

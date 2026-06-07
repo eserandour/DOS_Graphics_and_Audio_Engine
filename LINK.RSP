@@ -6,6 +6,7 @@ file video.obj
 file palette.obj
 file graphics.obj
 file image.obj
+file sprite.obj
 file font1.obj
 file f1_8x8.obj
 file f1_8x16.obj

@@ -5,6 +5,7 @@ wcc -ml -0 -os -I. video.c > video.out
 wcc -ml -0 -os -I. palette.c > palette.out
 wcc -ml -0 -os -I. graphics.c > graphics.out
 wcc -ml -0 -os -I. image.c > image.out
+wcc -ml -0 -os -I. sprite.c > sprite.out
 wcc -ml -0 -os -I. font1.c > font1.out
 wcc -ml -0 -os -I. font1\f1_8x8.c > f1_8x8.out
 wcc -ml -0 -os -I. font1\f1_8x16.c > f1_8x16.out
