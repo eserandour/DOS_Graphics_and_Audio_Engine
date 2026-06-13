@@ -24,8 +24,9 @@
    seul bloc (limite du segment 16 bits). Un sprite de
    320×200 = 64 000 octets tient juste. Au-delà (ex. feuille
    de 320×256 = 81 920 o), utiliser spriteLoadSplit qui
-   découpe en deux blocs de 32 768 octets, exactement comme
-   scene6.c le fait manuellement pour tex0/tex1.
+   découpe en N blocs de 32 768 octets max chacun (jusqu'à
+   SPR_SPLIT_MAX_BLK blocs, voir SPR_SPLIT_MAX), sur le même
+   principe que le split manuel de scene6.c pour tex0/tex1.
 
    Les sprites dont w*h <= 65 535 utilisent spriteLoad.
    Au-delà, spriteLoadSplit (voir section dédiée plus bas).
@@ -70,7 +71,7 @@
        spriteBlitZoneKey(&sheet, col*16, row*16, 16, 16,
                          dstX, dstY, colorKey);
 
-   Texture > 64 Ko (feuille 320x256 = 81920 o) :
+   Texture > 64 Ko (feuille 320x256 = 81920 o, 3 blocs) :
        SpriteSplit big;
        if (spriteLoadSplit(&big, "bg.raw", 320, 256) != SPR_OK) ...
        spriteBlitSplit(&big, dstX, dstY);
@@ -86,7 +87,7 @@
 #define SPR_ERR_MEM   1   /* _fmalloc a retourné NULL         */
 #define SPR_ERR_FILE  2   /* fopen a échoué                   */
 #define SPR_ERR_READ  3   /* fread incomplet                  */
-#define SPR_ERR_SIZE  4   /* w*h > 65535, utiliser SplitSprite*/
+#define SPR_ERR_SIZE  4   /* w*h trop grand (> SPR_SPLIT_MAX) */
 
 
 /* =========================================================
@@ -103,16 +104,27 @@ typedef struct {
 /* =========================================================
    STRUCTURE SpriteSplit — w*h > 65 535 octets
    =========================================================
-   Deux blocs far de 32 768 octets chacun.
-   blk[0] contient les octets 0..32767,
-   blk[1] contient les octets 32768..w*h-1.
-   Exige w*h <= 65 536 (deux blocs de 32 768 max).
+   N blocs far de 32 768 octets chacun (sauf le dernier,
+   qui peut être plus petit). blk[i] contient les octets
+   i*32768 .. min((i+1)*32768, w*h) - 1.
+
+   nBlk = nombre de blocs effectivement utilisés.
+   SPR_SPLIT_MAX_BLK = capacité maximale du tableau blk[].
+
+   Taille max gérée : SPR_SPLIT_MAX_BLK * 32768 octets.
+   Avec 8 blocs → 262 144 octets (largement de quoi couvrir
+   une feuille 320x256 = 81 920 o, ou même 320x800).
    ========================================================= */
 
+#define SPR_SPLIT_BLOCK   32768L
+#define SPR_SPLIT_MAX_BLK 8
+#define SPR_SPLIT_MAX     (SPR_SPLIT_MAX_BLK * SPR_SPLIT_BLOCK)
+
 typedef struct {
-    unsigned char far *blk[2]; /* deux demi-blocs far          */
-    int w;                     /* largeur en pixels            */
-    int h;                     /* hauteur en pixels            */
+    unsigned char far *blk[SPR_SPLIT_MAX_BLK]; /* blocs far     */
+    int nBlk;                   /* nombre de blocs utilisés      */
+    int w;                      /* largeur en pixels             */
+    int h;                      /* hauteur en pixels             */
 } SpriteSplit;
 
 
@@ -155,17 +167,30 @@ void spriteBlitZoneKey(const Sprite *spr,
                        int dstX, int dstY,
                        int colorKey);
 
+/* Blit d'une frame d'animation depuis une feuille organisée
+   en grille régulière (frameW x frameH, framesPerRow colonnes).
+   frameIndex commence à 0 (ligne par ligne). Opaque. */
+void spriteBlitFrame(const Sprite *spr, int frameIndex,
+                     int framesPerRow, int frameW, int frameH,
+                     int dstX, int dstY);
+
+/* Idem spriteBlitFrame avec colorKey. */
+void spriteBlitFrameKey(const Sprite *spr, int frameIndex,
+                        int framesPerRow, int frameW, int frameH,
+                        int dstX, int dstY, int colorKey);
+
 
 /* =========================================================
-   SPRITE SPLIT  (w*h > 65 535, max 2 × 32 768)
+   SPRITE SPLIT  (w*h > 65 535, max SPR_SPLIT_MAX octets)
    ========================================================= */
 
-/* Charge le .raw en deux blocs far de 32 768 octets.
-   Retourne SPR_OK ou un code SPR_ERR_*. */
+/* Charge le .raw en N blocs far de 32 768 octets max chacun.
+   Retourne SPR_OK ou un code SPR_ERR_* (SPR_ERR_SIZE si
+   w*h > SPR_SPLIT_MAX). */
 int spriteLoadSplit(SpriteSplit *spr, const char *rawFile,
                     int w, int h);
 
-/* Libère les deux blocs far. Met les pointeurs à NULL. */
+/* Libère tous les blocs alloués. Met les pointeurs à NULL. */
 void spriteFreeSplit(SpriteSplit *spr);
 
 /* Blit opaque d'un SpriteSplit dans le backbuffer. */

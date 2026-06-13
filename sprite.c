@@ -275,82 +275,149 @@ void spriteBlitZoneKey(const Sprite *spr,
 
 
 /* =========================================================
-   SPRITE SPLIT  (w*h > 65 535, max 2 × 32 768 octets)
+   spriteBlitFrame / spriteBlitFrameKey — animation par feuille
    =========================================================
-   Même principe que le split manuel de scene6.c (tex0/tex1).
-   Les octets 0..32767      → blk[0]
-   Les octets 32768..w*h-1  → blk[1]
+   Pratique pour les feuilles d'animation organisées en
+   grille régulière de frameW x frameH pixels, framesPerRow
+   colonnes par ligne. frameIndex commence à 0.
 
-   Les blits reconstituent les lignes en testant si elles
-   chevauchent la frontière entre les deux blocs.
+   col = frameIndex % framesPerRow
+   row = frameIndex / framesPerRow
+   srcX = col * frameW, srcY = row * frameH
+
+   Simple enrobage autour de spriteBlitZone(Key), sans
+   accès disque ni calcul supplémentaire côté appelant.
    ========================================================= */
+
+void spriteBlitFrame(const Sprite *spr, int frameIndex,
+                     int framesPerRow, int frameW, int frameH,
+                     int dstX, int dstY)
+{
+    int col = frameIndex % framesPerRow;
+    int row = frameIndex / framesPerRow;
+
+    spriteBlitZone(spr, col * frameW, row * frameH, frameW, frameH,
+                   dstX, dstY);
+}
+
+void spriteBlitFrameKey(const Sprite *spr, int frameIndex,
+                        int framesPerRow, int frameW, int frameH,
+                        int dstX, int dstY, int colorKey)
+{
+    int col = frameIndex % framesPerRow;
+    int row = frameIndex / framesPerRow;
+
+    spriteBlitZoneKey(spr, col * frameW, row * frameH, frameW, frameH,
+                      dstX, dstY, colorKey);
+}
+
+
+/* =========================================================
+   SPRITE SPLIT  (w*h > 65 535, max SPR_SPLIT_MAX octets)
+   =========================================================
+   Généralisation du split manuel de scene6.c (tex0/tex1) à
+   N blocs de SPR_SPLIT_BLOCK (32768) octets max chacun.
+   Le dernier bloc peut être plus petit (taille restante).
+
+   blk[i] contient les octets i*32768 .. min((i+1)*32768,
+   w*h) - 1. nBlk = nombre de blocs réellement alloués.
+
+   Les blits reconstituent chaque ligne en copiant, bloc par
+   bloc, les portions qui la recouvrent (une ligne peut être
+   à cheval sur deux blocs au maximum puisque w <= 320 <
+   32768).
+   ========================================================= */
+
+/* Copie 'len' octets de la zone logique [offset, offset+len)
+   du SpriteSplit vers dst (near, rowBuf). Une ligne (w <= 320)
+   ne peut chevaucher qu'au plus deux blocs consécutifs,
+   puisque chaque bloc fait au moins 320 octets. */
+static void splitCopyOut(const SpriteSplit *spr, long offset,
+                         int len, unsigned char *dst)
+{
+    int blk      = (int)(offset / SPR_SPLIT_BLOCK);
+    long blkOff  = offset - (long)blk * SPR_SPLIT_BLOCK;
+    long avail   = SPR_SPLIT_BLOCK - blkOff;
+    int chunk0;
+
+    if ((long)len <= avail)
+    {
+        /* Entièrement dans blk. */
+        FCOPY(dst, spr->blk[blk] + blkOff, len);
+    }
+    else
+    {
+        /* À cheval entre blk et blk+1. */
+        chunk0 = (int)avail;
+        FCOPY(dst,          spr->blk[blk]     + blkOff, chunk0);
+        FCOPY(dst + chunk0, spr->blk[blk + 1],           len - chunk0);
+    }
+}
 
 int spriteLoadSplit(SpriteSplit *spr, const char *rawFile,
                     int w, int h)
 {
     FILE *f;
     unsigned char rowBuf[320];
-    unsigned char far *dst0;
-    unsigned char far *dst1;
+    long size = (long)w * h;
+    long remaining;
     long written = 0;
-    long half = 32768L;
-    int row, chunk0, chunk1;
+    int i, row;
+    int blk;
+    long blkOff, avail;
+    int chunk0;
 
-    spr->blk[0] = NULL;
-    spr->blk[1] = NULL;
     spr->w = w;
     spr->h = h;
+    spr->nBlk = 0;
+    for (i = 0; i < SPR_SPLIT_MAX_BLK; i++) spr->blk[i] = NULL;
 
-    spr->blk[0] = (unsigned char far *)_fmalloc(32768U);
-    if (!spr->blk[0]) return SPR_ERR_MEM;
+    if (size > SPR_SPLIT_MAX) return SPR_ERR_SIZE;
 
-    spr->blk[1] = (unsigned char far *)_fmalloc(32768U);
-    if (!spr->blk[1]) { _ffree(spr->blk[0]); spr->blk[0] = NULL; return SPR_ERR_MEM; }
+    /* Calcule le nombre de blocs nécessaires et les alloue. */
+    spr->nBlk = (int)((size + SPR_SPLIT_BLOCK - 1) / SPR_SPLIT_BLOCK);
+    if (spr->nBlk < 1) spr->nBlk = 1;
 
-    f = fopen(rawFile, "rb");
-    if (!f)
+    remaining = size;
+    for (i = 0; i < spr->nBlk; i++)
     {
-        _ffree(spr->blk[0]); _ffree(spr->blk[1]);
-        spr->blk[0] = spr->blk[1] = NULL;
-        return SPR_ERR_FILE;
+        long blkSize = (remaining < SPR_SPLIT_BLOCK) ? remaining : SPR_SPLIT_BLOCK;
+        spr->blk[i] = (unsigned char far *)_fmalloc((size_t)blkSize);
+        if (!spr->blk[i])
+        {
+            spriteFreeSplit(spr);
+            return SPR_ERR_MEM;
+        }
+        remaining -= blkSize;
     }
 
-    dst0 = spr->blk[0];
-    dst1 = spr->blk[1];
+    f = fopen(rawFile, "rb");
+    if (!f) { spriteFreeSplit(spr); return SPR_ERR_FILE; }
 
     for (row = 0; row < h; row++)
     {
         if (fread(rowBuf, 1, (size_t)w, f) != (size_t)w)
         {
             fclose(f);
-            _ffree(spr->blk[0]); _ffree(spr->blk[1]);
-            spr->blk[0] = spr->blk[1] = NULL;
+            spriteFreeSplit(spr);
             return SPR_ERR_READ;
         }
 
-        /* Écrire la ligne dans blk[0] et/ou blk[1] selon
-           la position de la frontière (offset 32768). */
-        if (written + w <= half)
+        /* Écrit la ligne (w octets) à l'offset logique 'written',
+           répartie sur un ou deux blocs consécutifs. */
+        blk    = (int)(written / SPR_SPLIT_BLOCK);
+        blkOff = written - (long)blk * SPR_SPLIT_BLOCK;
+        avail  = SPR_SPLIT_BLOCK - blkOff;
+
+        if ((long)w <= avail)
         {
-            /* Ligne entière dans blk[0]. */
-            FCOPY(dst0, rowBuf, w);
-            dst0 += w;
-        }
-        else if (written >= half)
-        {
-            /* Ligne entière dans blk[1]. */
-            FCOPY(dst1, rowBuf, w);
-            dst1 += w;
+            FCOPY(spr->blk[blk] + blkOff, rowBuf, w);
         }
         else
         {
-            /* Ligne à cheval sur les deux blocs. */
-            chunk0 = (int)(half - written);   /* octets dans blk[0] */
-            chunk1 = w - chunk0;              /* octets dans blk[1] */
-            FCOPY(dst0, rowBuf,          chunk0);
-            FCOPY(dst1, rowBuf + chunk0, chunk1);
-            dst0 += chunk0;
-            dst1 += chunk1;
+            chunk0 = (int)avail;
+            FCOPY(spr->blk[blk]     + blkOff, rowBuf,          chunk0);
+            FCOPY(spr->blk[blk + 1],          rowBuf + chunk0, w - chunk0);
         }
 
         written += w;
@@ -362,67 +429,50 @@ int spriteLoadSplit(SpriteSplit *spr, const char *rawFile,
 
 void spriteFreeSplit(SpriteSplit *spr)
 {
-    if (spr->blk[0]) { _ffree(spr->blk[0]); spr->blk[0] = NULL; }
-    if (spr->blk[1]) { _ffree(spr->blk[1]); spr->blk[1] = NULL; }
+    int i;
+    for (i = 0; i < SPR_SPLIT_MAX_BLK; i++)
+    {
+        if (spr->blk[i]) { _ffree(spr->blk[i]); spr->blk[i] = NULL; }
+    }
+    spr->nBlk = 0;
 }
 
 
 /* =========================================================
    spriteBlitSplit — blit opaque d'un SpriteSplit
    =========================================================
-   Pour chaque ligne de la zone blittée, on récupère un
-   pointeur far dans blk[0] ou blk[1] selon l'offset absolu.
-   Les lignes à cheval sur les deux blocs sont copiées en
-   deux passes (chunk0 + chunk1) vers un rowBuf near, puis
-   le rowBuf est copié dans le backbuffer.
+   Pour chaque ligne de la zone blittée, splitCopyOut()
+   reconstitue la ligne (1 ou 2 blocs) dans rowBuf, qui est
+   ensuite copié vers le backbuffer.
    ========================================================= */
 
 void spriteBlitSplit(const SpriteSplit *spr, int dstX, int dstY)
 {
-    int srcY0 = 0;
+    int srcX0 = 0, srcY0 = 0;
     int dstX0 = dstX, dstY0 = dstY;
     int blitW = spr->w, blitH = spr->h;
     unsigned char rowBuf[320];
     unsigned char far *dst;
     int row;
     long offset;
-    int chunk0, chunk1;
-    long half = 32768L;
 
+    /* Clipping gauche. */
+    if (dstX0 < 0) { srcX0 -= dstX0; blitW += dstX0; dstX0 = 0; }
     /* Clipping haut. */
     if (dstY0 < 0) { srcY0 -= dstY0; blitH += dstY0; dstY0 = 0; }
+    /* Clipping droit. */
+    if (dstX0 + blitW > SCREEN_WIDTH)  blitW = SCREEN_WIDTH  - dstX0;
     /* Clipping bas. */
     if (dstY0 + blitH > SCREEN_HEIGHT) blitH = SCREEN_HEIGHT - dstY0;
-    /* Clipping gauche/droit : pour simplifier, blitW reste spr->w.
-       Pour un clipping complet en X, voir spriteBlit. */
-    if (dstX0 < 0) dstX0 = 0;
+
     if (blitW <= 0 || blitH <= 0) return;
 
     dst = BB_PTR(dstX0, dstY0);
 
     for (row = 0; row < blitH; row++)
     {
-        offset = (long)(srcY0 + row) * spr->w;
-
-        if (offset + blitW <= half)
-        {
-            /* Ligne entière dans blk[0]. */
-            FCOPY(rowBuf, spr->blk[0] + offset, blitW);
-        }
-        else if (offset >= half)
-        {
-            /* Ligne entière dans blk[1]. */
-            FCOPY(rowBuf, spr->blk[1] + (offset - half), blitW);
-        }
-        else
-        {
-            /* Ligne à cheval. */
-            chunk0 = (int)(half - offset);
-            chunk1 = blitW - chunk0;
-            FCOPY(rowBuf,          spr->blk[0] + offset, chunk0);
-            FCOPY(rowBuf + chunk0, spr->blk[1],          chunk1);
-        }
-
+        offset = (long)(srcY0 + row) * spr->w + srcX0;
+        splitCopyOut(spr, offset, blitW, rowBuf);
         FCOPY(dst, rowBuf, blitW);
         dst += SCREEN_WIDTH;
     }
@@ -436,7 +486,7 @@ void spriteBlitSplit(const SpriteSplit *spr, int dstX, int dstY)
 void spriteBlitSplitKey(const SpriteSplit *spr, int dstX, int dstY,
                         int colorKey)
 {
-    int srcY0 = 0;
+    int srcX0 = 0, srcY0 = 0;
     int dstX0 = dstX, dstY0 = dstY;
     int blitW = spr->w, blitH = spr->h;
     unsigned char rowBuf[320];
@@ -445,15 +495,18 @@ void spriteBlitSplitKey(const SpriteSplit *spr, int dstX, int dstY,
     unsigned char *s;
     int row, col;
     long offset;
-    int chunk0, chunk1;
-    long half = 32768L;
     unsigned char ck;
 
     if (colorKey < 0) { spriteBlitSplit(spr, dstX, dstY); return; }
 
+    /* Clipping gauche. */
+    if (dstX0 < 0) { srcX0 -= dstX0; blitW += dstX0; dstX0 = 0; }
+    /* Clipping haut. */
     if (dstY0 < 0) { srcY0 -= dstY0; blitH += dstY0; dstY0 = 0; }
+    /* Clipping droit. */
+    if (dstX0 + blitW > SCREEN_WIDTH)  blitW = SCREEN_WIDTH  - dstX0;
+    /* Clipping bas. */
     if (dstY0 + blitH > SCREEN_HEIGHT) blitH = SCREEN_HEIGHT - dstY0;
-    if (dstX0 < 0) dstX0 = 0;
     if (blitW <= 0 || blitH <= 0) return;
 
     dst = BB_PTR(dstX0, dstY0);
@@ -461,19 +514,8 @@ void spriteBlitSplitKey(const SpriteSplit *spr, int dstX, int dstY,
 
     for (row = 0; row < blitH; row++)
     {
-        offset = (long)(srcY0 + row) * spr->w;
-
-        if (offset + blitW <= half)
-            FCOPY(rowBuf, spr->blk[0] + offset, blitW);
-        else if (offset >= half)
-            FCOPY(rowBuf, spr->blk[1] + (offset - half), blitW);
-        else
-        {
-            chunk0 = (int)(half - offset);
-            chunk1 = blitW - chunk0;
-            FCOPY(rowBuf,          spr->blk[0] + offset, chunk0);
-            FCOPY(rowBuf + chunk0, spr->blk[1],          chunk1);
-        }
+        offset = (long)(srcY0 + row) * spr->w + srcX0;
+        splitCopyOut(spr, offset, blitW, rowBuf);
 
         s = rowBuf;
         d = dst;
