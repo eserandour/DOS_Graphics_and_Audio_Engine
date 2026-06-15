@@ -1,0 +1,29 @@
+wcc -ml -0 -os -I. main.c > main.out
+wcc -ml -0 -os -I. timer.c > timer.out
+wcc -ml -0 -os -I. keyboard.c > keyboard.out
+wcc -ml -0 -os -I. video.c > video.out
+wasm -ml palasm.asm > palasm.out
+wcc -ml -0 -os -fo=palette.obj -I. palopt.c > palette.out
+wcc -ml -0 -os -I. graphics.c > graphics.out
+wcc -ml -0 -os -I. image.c > image.out
+wcc -ml -0 -os -I. sprite.c > sprite.out
+wcc -ml -0 -os -I. font1.c > font1.out
+wcc -ml -0 -os -I. font1\f1_8x8.c > f1_8x8.out
+wcc -ml -0 -os -I. font1\f1_8x16.c > f1_8x16.out
+wcc -ml -0 -os -I. font1\f1_16x16.c > f1_16x16.out
+wcc -ml -0 -os -I. font2.c > font2.out
+wcc -ml -0 -os -I. scene.c > scene.out
+wcc -ml -0 -os -I. scenes\scene0.c > scene0.out
+wcc -ml -0 -os -I. scenes\scene1.c > scene1.out
+wcc -ml -0 -os -I. scenes\scene2.c > scene2.out
+wcc -ml -0 -os -I. scenes\scene3.c > scene3.out
+wcc -ml -0 -os -I. scenes\scene4.c > scene4.out
+wcc -ml -0 -os -I. scenes\scene5.c > scene5.out
+wcc -ml -0 -os -I. scenes\scene6.c > scene6.out
+wcc -ml -0 -os -I. scenes\scene7.c > scene7.out
+wcc -ml -0 -os -I. scenes\scene8.c > scene8.out
+wcc -ml -0 -os -I. scenes\scene9.c > scene9.out
+wcc -ml -0 -os -I. scenes\scene10.c > scene10.out
+wcc -ml -0 -os -I. scenes\scene11.c > scene11.out
+wcc -ml -0 -os -I. scenes\scene12.c > scene12.out
+wlink @LINKOPT.RSP > link.out
