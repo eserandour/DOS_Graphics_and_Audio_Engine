@@ -21,9 +21,4 @@ wcc -ml -0 -os -I. scenes\scene4.c > scene4.out
 wcc -ml -0 -os -I. scenes\scene5.c > scene5.out
 wcc -ml -0 -os -I. scenes\scene6.c > scene6.out
 wcc -ml -0 -os -I. scenes\scene7.c > scene7.out
-wcc -ml -0 -os -I. scenes\scene8.c > scene8.out
-wcc -ml -0 -os -I. scenes\scene9.c > scene9.out
-wcc -ml -0 -os -I. scenes\scene10.c > scene10.out
-wcc -ml -0 -os -I. scenes\scene11.c > scene11.out
-wcc -ml -0 -os -I. scenes\scene12.c > scene12.out
 wlink @LINKOPT.RSP > link.out
