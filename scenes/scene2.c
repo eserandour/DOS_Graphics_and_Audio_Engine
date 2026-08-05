@@ -5,7 +5,7 @@
    1.  1 s : affichage statique (palette par défaut)
    2.  5 s : cycle de palette vers la droite
    3.  5 s : cycle de palette vers la gauche
-   4.  3 s : lerp vers pinkPalette
+   4.  3 s : lerp vers redPalette
    Aucune gestion clavier (sauf Échap global via INT 09h).
    ========================================================= */
 
@@ -75,7 +75,7 @@ void scene2(void)
     const unsigned long D1 = 1000UL;   /* statique      */
     const unsigned long D2 = 5000UL;   /* cycle droite  */
     const unsigned long D3 = 5000UL;   /* cycle gauche  */
-    const unsigned long D4 = 3000UL;   /* lerp → pink      */
+    const unsigned long D4 = 3000UL;   /* lerp → rouge     */
 
     /* Seuils cumulés : à quel moment (depuis sceneStart)
        chaque phase se termine. */
@@ -97,7 +97,7 @@ void scene2(void)
         phase4_initialized = 0;   /* toujours réinitialiser au démarrage */
         copyPalette(workingPalette, defaultPalette);
         setPalette(workingPalette);
-        buildPinkPalette(pinkPalette);
+        buildRedPalette(redPalette);
         clearScreen(0);
         flip();
     }
@@ -137,9 +137,9 @@ void scene2(void)
     }
     
     /* -------------------------------------------------------
-       Phase 4 : Lerp vers pinkPalette (T3 → T4 ms)
+       Phase 4 : Lerp vers redPalette (T3 → T4 ms)
        Interpolation linéaire entre la palette de travail
-       actuelle (après les cycles) et pinkPalette.
+       actuelle (après les cycles) et redPalette.
        On sauvegarde paletteA une seule fois au début de
        la phase pour que l'interpolation parte toujours du
        même point (et non de la palette en cours de lerp).
@@ -153,7 +153,7 @@ void scene2(void)
         if (!phase4_initialized)
         {
             copyPalette(paletteA, workingPalette);  /* état actuel → source  */
-            copyPalette(paletteB, pinkPalette);     /* cible                 */
+            copyPalette(paletteB, redPalette);       /* cible                 */
             phase4_initialized = 1;
         }
 
