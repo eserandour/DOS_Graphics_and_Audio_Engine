@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Font Editor — font1dat.c</title>
+<title>Font Editor — f1_.c [8x8]</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
@@ -462,7 +462,7 @@
 
     <!-- Export C -->
     <div style="display:flex;flex-direction:column;gap:10px;flex:1">
-      <div class="section-label">Code C généré (format font1dat.c)</div>
+      <div class="section-label">Code C généré (format f1_.c)</div>
       <div class="btn-row">
         <button class="btn" id="btn-export-all"     onclick="exportC()">📋 Tout</button>
         <button class="btn" id="btn-export-glyph"   onclick="exportGlyph()">📋 Glyphe actif</button>
@@ -720,7 +720,7 @@ function setMode(m) {
     document.getElementById('tab-'+id).classList.toggle('active', id===m);
   });
   document.getElementById('status-right').textContent = `Font Editor — ${m}`;
-  document.title = `Font Editor — font1dat.c [${m}]`;
+  document.title = `Font Editor — f1_.c [${m}]`;
   document.body.className = 'mode-'+m;
   rebuildAll(); updateAll();
 }
@@ -1014,13 +1014,13 @@ function renderStringToCanvas(canvas,str,scale){
 }
 
 // ═══════════════════════════════════════════════════════════
-// GÉNÉRATION CODE C — FORMAT font1dat.c
+// GÉNÉRATION CODE C — FORMAT f1_.c
 // ═══════════════════════════════════════════════════════════
 
 function hex8(b){ return '0x'+b.toString(16).padStart(2,'0'); }
 function hex16(w){ return '0x'+w.toString(16).toUpperCase().padStart(4,'0'); }
 
-// Literal C pour le caractère (comme dans font1dat.c)
+// Literal C pour le caractère (comme dans f1_.c)
 // Retourne le numéro décimal du code pour les codes non-ASCII (>127 ou <32 sauf quelques-uns)
 // ou le caractère littéral pour les printables ASCII simples
 function cCharLit(c){
@@ -1068,7 +1068,7 @@ function generateCode(chars, withHeader=true){
     }
     if(withHeader) lines.push('}');
   } else {
-    // 16x16 — format avec r[] comme dans font1dat.c
+    // 16x16 — format avec r[] comme dans f1_.c
     if(withHeader){
       lines.push('void _initFont1_16x16(void)');
       lines.push('{');
