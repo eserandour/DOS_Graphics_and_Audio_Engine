@@ -98,7 +98,7 @@ typedef enum {
 /* Contient tous les glyphes d'une police bitmap personnelle.
    - size            : taille des glyphes (8 ou 16)
    - count           : nombre de glyphes définis
-   - capacity        : nombre max de glyphes (128)
+   - capacity        : nombre max de glyphes (256)
    - bytes_per_glyph : taille en octets d'un glyphe
    - lut[256]        : lut[c] = index du glyphe pour le
                        caractère c, ou -1 si non défini
@@ -176,7 +176,9 @@ void font1InitBank16x16(void);
 
 /* Libère les deux allocations far d'une Font1Bank
    (la struct elle-même et le tableau data).
-   Met le pointeur passé à NULL. */
+   Met le pointeur passé à NULL, ainsi que le champ .bank
+   du Font1 correspondant (FONT1_BANK_8X8/_8X16/_16X16),
+   pour éviter tout pointeur pendant après libération. */
 void font1FreeBank(Font1Bank far **fb);
 
 /* ---------------------------------------------------------

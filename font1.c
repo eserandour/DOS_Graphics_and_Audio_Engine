@@ -336,10 +336,21 @@ void font1InitBank16x16(void)
 }
 
 /* Libère les deux allocations far d'une Font1Bank.
-   Appel sans effet si *fb == NULL. */
+   Appel sans effet si *fb == NULL.
+
+   *fb est forcément l'une des trois Font1Bank globales
+   (font1Bank8x8, font1Bank8x16 ou font1Bank16x16) : on met
+   aussi à jour le champ .bank du Font1 correspondant
+   (FONT1_BANK_8X8 / _8X16 / _16X16), pour qu'il ne pointe
+   plus jamais vers la mémoire qu'on vient de libérer. */
 void font1FreeBank(Font1Bank far **fb)
 {
     if (!*fb) return;
+
+    if      (*fb == font1Bank8x8)   FONT1_BANK_8X8.bank   = NULL;
+    else if (*fb == font1Bank8x16)  FONT1_BANK_8X16.bank  = NULL;
+    else if (*fb == font1Bank16x16) FONT1_BANK_16X16.bank = NULL;
+
     if ((*fb)->data) { _ffree((*fb)->data); (*fb)->data = NULL; }
     _ffree(*fb);
     *fb = NULL;
