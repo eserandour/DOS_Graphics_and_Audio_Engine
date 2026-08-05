@@ -20,7 +20,9 @@ Color workingPalette[256];   /* palette de travail courante */
 Color paletteA[256];         /* palette source pour lerp    */
 Color paletteB[256];         /* palette cible pour lerp     */
 Color grayPalette[256];      /* dégradé noir → blanc        */
-Color pinkPalette[256];      /* noir + rouge → blanc        */
+Color redPalette[256];       /* noir + rouge → blanc        */
+Color bluePalette[256];      /* noir + bleu → blanc         */
+Color greenPalette[256];     /* noir + vert → blanc         */
 Color rainbowPalette[256];   /* cercle chromatique HSV 360° */
 
 /* =========================================================
@@ -263,13 +265,13 @@ void buildGrayPalette(Color *pal)
     }
 }
 
-/* Génère la palette rose/rouge :
+/* Génère la palette rouge :
    - index 0 : noir total (fond d'écran)
    - index 1-255 : rouge fixe à 63 (maximum), vert et bleu
      qui montent linéairement de 0 à 63.
    Résultat visuel : du rouge vif vers le blanc en passant
    par le rose. Formule : (i * 63) / 255 = i / 4.04... */
-void buildPinkPalette(Color *pal)
+void buildRedPalette(Color *pal)
 {
     int i;
     pal[0].r = 0; pal[0].g = 0; pal[0].b = 0;   /* noir */
@@ -277,6 +279,42 @@ void buildPinkPalette(Color *pal)
     {
         pal[i].r = 63;                                  /* rouge max        */
         pal[i].g = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
+        pal[i].b = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
+    }
+}
+
+/* Génère la palette bleue :
+   - index 0 : noir total (fond d'écran)
+   - index 1-255 : bleu fixe à 63 (maximum), rouge et vert
+     qui montent linéairement de 0 à 63.
+   Résultat visuel : du bleu vif vers le blanc en passant
+   par le bleu ciel. Formule : (i * 63) / 255 = i / 4.04... */
+void buildBluePalette(Color *pal)
+{
+    int i;
+    pal[0].r = 0; pal[0].g = 0; pal[0].b = 0;   /* noir */
+    for (i = 1; i < 256; i++)
+    {
+        pal[i].r = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
+        pal[i].g = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
+        pal[i].b = 63;                                  /* bleu max         */
+    }
+}
+
+/* Génère la palette verte :
+   - index 0 : noir total (fond d'écran)
+   - index 1-255 : vert fixe à 63 (maximum), rouge et bleu
+     qui montent linéairement de 0 à 63.
+   Résultat visuel : du vert vif vers le blanc en passant
+   par le vert pâle. Formule : (i * 63) / 255 = i / 4.04... */
+void buildGreenPalette(Color *pal)
+{
+    int i;
+    pal[0].r = 0; pal[0].g = 0; pal[0].b = 0;   /* noir */
+    for (i = 1; i < 256; i++)
+    {
+        pal[i].r = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
+        pal[i].g = 63;                                  /* vert max         */
         pal[i].b = (unsigned char)((i * 63) / 255);    /* 0 → 63 linéaire */
     }
 }

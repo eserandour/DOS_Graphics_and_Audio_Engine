@@ -49,9 +49,17 @@ extern Color paletteB[256];
 /* Palette dégradé noir → blanc (niveaux de gris). */
 extern Color grayPalette[256];
 
-/* Palette rose : index 0 = noir, index 1-255 = rouge max
+/* Palette rouge : index 0 = noir, index 1-255 = rouge max
    avec vert et bleu croissants (rouge → blanc). */
-extern Color pinkPalette[256];
+extern Color redPalette[256];
+
+/* Palette bleue : index 0 = noir, index 1-255 = bleu max
+   avec rouge et vert croissants (bleu → blanc). */
+extern Color bluePalette[256];
+
+/* Palette verte : index 0 = noir, index 1-255 = vert max
+   avec rouge et bleu croissants (vert → blanc). */
+extern Color greenPalette[256];
 
 /* Palette cercle chromatique HSV :
    index 0 = noir, index 1-255 = teinte tournante sur 360°
@@ -146,11 +154,23 @@ void cyclePaletteRight(Color *pal, int start, int end);
    Conversion : val_6bits = index / 4 (décalage de 2 bits). */
 void buildGrayPalette(Color *pal);
 
-/* Génère une palette rose/rouge :
+/* Génère une palette rouge :
    index 0   → noir (r=g=b=0)
    index 1-255 → rouge fixe à 63, vert et bleu croissants
-   de 0 à 63. L'effet va du rouge pur vers le blanc rosé. */
-void buildPinkPalette(Color *pal);
+   de 0 à 63. L'effet va du rouge pur vers le blanc. */
+void buildRedPalette(Color *pal);
+
+/* Génère une palette bleue :
+   index 0   → noir (r=g=b=0)
+   index 1-255 → bleu fixe à 63, rouge et vert croissants
+   de 0 à 63. L'effet va du bleu pur vers le blanc. */
+void buildBluePalette(Color *pal);
+
+/* Génère une palette verte :
+   index 0   → noir (r=g=b=0)
+   index 1-255 → vert fixe à 63, rouge et bleu croissants
+   de 0 à 63. L'effet va du vert pur vers le blanc. */
+void buildGreenPalette(Color *pal);
 
 /* Génère un cercle chromatique HSV complet :
    index 0   → noir (r=g=b=0)
