@@ -15,7 +15,7 @@ Elle exploite le **mode vidéo VGA 13h** (320×200, 256 couleurs) pour enchaîne
 | [Open Watcom](https://github.com/open-watcom/open-watcom-v2) | 1.9 |
 | [FreeDOS](https://www.freedos.org/) | 1.4 |
 | Python (outils uniquement) | 3.x |
-| Compilateur C natif (gcc/cc) | pour `OUTILS/gen_palettes.py` uniquement |
+| Compilateur C natif (gcc/cc) | pour `OUTILS/*.py` |
 
 La compilation de la démo se fait **sous FreeDOS** (ou un émulateur DOS tel que DOSBox/VirtualBox) avec `wcc` et `wlink` disponibles dans le `PATH`.
 
