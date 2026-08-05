@@ -265,7 +265,7 @@ DEMO/
             |                             --cols N, --start 0xXX,
             |                             --encoding cp850|cp437|unicode, --preview
             |                   encodage : cp850 (défaut), cp437, unicode (chr(i) / U+XXXX)
-            +-- WY-700a.png           police WY-700 bitmap (32x8 glyphes 16x16) -- RETENUE, copiée en font1/f1_16x16.c
+            +-- WY-700a.png           police WY-700 bitmap (32x8 glyphes 16x16)
             +-- f1_16x16-WY-700a.c    données générées -- copiées en font1/f1_16x16.c
             |
             +-- WY-700b.png           variante WY-700b (non retenue)
