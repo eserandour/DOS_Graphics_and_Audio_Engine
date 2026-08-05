@@ -6,7 +6,8 @@
    écrit dans DEFAULT.PAL, puis repasse en mode texte.
 
    Compilation et exécution (FreeDOS, Open Watcom 1.9) :
-     wcl -ml -0 -os -I. DUMPPAL.C palette.c video.c
+     Se placer dans le répertoire OUTILS qui contient ce fichier
+     wcl -ml -0 -os -I.. DUMPPAL.C ..\palette.c ..\video.c
      DUMPPAL
 
    Le fichier DEFAULT.PAL produit est au format standard du
