@@ -41,6 +41,7 @@ void shutdown(void)
 
 static const Scene playlist[] = {
     SCENE_0,  /* 1 seconde d'écran noir (pour la capture vidéo) */
+    SCENE_8,  /* démonstration moteur audio                     */
     SCENE_1,  /* pixels aléatoires (LCG)                        */
     SCENE_2,  /* démonstration palette VGA                      */
     SCENE_3,  /* démonstration des polices font1                */
