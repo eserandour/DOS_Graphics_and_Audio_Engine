@@ -72,9 +72,9 @@ static const char *phaseText(int phase)
 {
     switch (phase)
     {
-    case PHASE_FADE_IN:  return "FADE IN   0% -> 100% (3s)";
+    case PHASE_FADE_IN:  return "FADE IN   0% -> 100% (6s)";
     case PHASE_PLAYING:  return "LECTURE - volume normal du fichier";
-    case PHASE_FADE_OUT: return "FADE OUT  100% -> 0% (3s)";
+    case PHASE_FADE_OUT: return "FADE OUT  100% -> 0% (6s)";
     default:              return "ARRET - stopMusic(), memoire liberee";
     }
 }
