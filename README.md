@@ -1,6 +1,6 @@
 # Moteur graphique et audio pour DEMO (Open Watcom 1.9 sous FreeDOS 1.4)
 
-*Dernière version : 07/08/2026 à 15h15*
+*Dernière version : 07/08/2026 à 17h15*
 
 Un **moteur graphique et audio** en C89 pur pour **FreeDOS**, compilé avec
 **Open Watcom 1.9**, sans aucune dépendance externe au runtime : mode vidéo
