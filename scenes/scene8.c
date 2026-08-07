@@ -4,7 +4,7 @@
               / stopMusic)
    =========================================================
    Enchaîne les quatre phases du cycle de vie audio sur
-   TESTMUS3.S3M ("Starshine - PM", Gv=48 Mv=48 — un morceau qui
+   musique.s3m ("Starshine - PM", Gv=48 Mv=48 — un morceau qui
    n'est PAS censé sortir à 100 % du numérique, bon test pour
    vérifier que Gv/Mv sont bien respectés, voir la section
    VOLUME de audio.h) :
@@ -61,7 +61,7 @@ static const char *statusText(int r)
     {
     case AUD_OK:         return "OK";
     case AUD_ERR_NOCARD: return "ERREUR: pas de carte son (BLASTER)";
-    case AUD_ERR_FILE:   return "ERREUR: TESTMUS3.S3M introuvable";
+    case AUD_ERR_FILE:   return "ERREUR: musique.s3m introuvable";
     case AUD_ERR_FORMAT: return "ERREUR: fichier .s3m invalide/tronque";
     case AUD_ERR_MEM:    return "ERREUR: memoire far insuffisante";
     default:             return "ERREUR: inconnue";
@@ -110,7 +110,7 @@ void scene8(void)
 
         font1InitBios();
 
-        loadStatus = playMusic("audios\\TESTMUS3.S3M");
+        loadStatus = playMusic("audios\\musique.s3m");
 
         /* La musique vient de démarrer à plein volume "normal" (Gv/Mv
            du fichier, voir stopMusic()/playMusic() dans s3m.c qui
@@ -155,7 +155,7 @@ void scene8(void)
         else if (phase == PHASE_STOPPED)
         {
             stopMusic();   /* coupe le son ET libère les ~290 Ko far
-                               de TESTMUS3.S3M — voir audio.c */
+                               de musique.s3m — voir audio.c */
         }
         lastPhase = phase;
     }
@@ -179,7 +179,7 @@ void scene8(void)
         font1DrawTextCentered( 48, "TEST AUDIO S3M", 15, &FONT1_BIOS);
         font1DrawTextCentered( 60, "playMusic + fadeIn/fadeOut + stop", 8, &FONT1_BIOS);
 
-        font1DrawTextCentered( 84, "Fichier : TESTMUS3.S3M", 7, &FONT1_BIOS);
+        font1DrawTextCentered( 84, "Fichier : musique.s3m", 7, &FONT1_BIOS);
         font1DrawTextCentered( 96, statusText(loadStatus),
                                (loadStatus == AUD_OK) ? 15 : 4, &FONT1_BIOS);
 
