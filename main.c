@@ -48,7 +48,6 @@ static const Scene playlist[] = {
     SCENE_5,  /* scrolling de texte                             */
     SCENE_6,  /* rotozoom freedos                               */
     SCENE_7,  /* démonstration primitives graphics              */
-    SCENE_8,  /* démonstration audio                            */
     SCENE_0,  /* 1 seconde d'écran noir (pour la capture vidéo) */
 };
 #define PLAYLIST_LEN (sizeof(playlist) / sizeof(playlist[0]))
