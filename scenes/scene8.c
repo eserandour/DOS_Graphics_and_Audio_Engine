@@ -6,7 +6,8 @@
    Enchaîne les quatre phases du cycle de vie audio sur
    TESTMUS3.S3M ("Starshine - PM", Gv=48 Mv=48 — un morceau qui
    n'est PAS censé sortir à 100 % du numérique, bon test pour
-   vérifier que Gv/Mv sont bien respectés, voir AUDIO_README.txt) :
+   vérifier que Gv/Mv sont bien respectés, voir la section
+   VOLUME de audio.h) :
 
      0.0s -  6.0s : FADE IN   — fadeMusicIn(6000)
      6.0s - 22.0s : LECTURE   — plein volume "normal" du morceau
@@ -39,7 +40,7 @@
 #include "scene.h"
 #include "audio.h"
 
-#define FADE_MS     6000UL   /* durée de chaque fondu */
+#define FADE_MS     6000UL   /* durée de chaque fondu 3000 à l'origine*/
 #define PLAY_MS     16000UL   /* palier plein volume entre les deux fondus */
 #define STOPPED_MS  4000UL   /* palier "arrêté" après stopMusic() */
 
@@ -71,9 +72,9 @@ static const char *phaseText(int phase)
 {
     switch (phase)
     {
-    case PHASE_FADE_IN:  return "FADE IN   0% -> 100% (6s)";
+    case PHASE_FADE_IN:  return "FADE IN   0% -> 100% (3s)";
     case PHASE_PLAYING:  return "LECTURE - volume normal du fichier";
-    case PHASE_FADE_OUT: return "FADE OUT  100% -> 0% (6s)";
+    case PHASE_FADE_OUT: return "FADE OUT  100% -> 0% (3s)";
     default:              return "ARRET - stopMusic(), memoire liberee";
     }
 }
