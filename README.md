@@ -1,4 +1,4 @@
-# Moteur graphique et audio pour DEMO (Open Watcom 1.9 / FreeDOS 1.4)
+# Moteur graphique et audio pour DEMO (Open Watcom 1.9 sous FreeDOS 1.4)
 
 *Dernière version : 07/08/2026 à 15h15*
 
