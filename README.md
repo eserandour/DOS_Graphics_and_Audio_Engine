@@ -98,7 +98,7 @@ scènes de démonstration :
 | Scène | Durée | Module illustré |
 |---|---|---|
 | `scene0` | 1 s | Écran noir (délimiteur de capture vidéo) |
-| `scene8` | 32 s | **Moteur audio** : cycle de vie complet d'un module S3M (fade in 6 s → lecture 16 s → fade out 6 s → arrêt 4 s) sur `TESTMUS3.S3M`, avec affichage en direct de la phase et du statut |
+| `scene8` | 32 s | **Moteur audio** : cycle de vie complet d'un module S3M (fade in 6 s → lecture 16 s → fade out 6 s → arrêt 4 s) sur `musique.s3m`, avec affichage en direct de la phase et du statut |
 | `scene1` | 6 s | **video/palette** : pixels aléatoires (LCG 32 bits) — fade in 1 s / fade out 3 s |
 | `scene2` | 14 s | **palette** : cycle gauche/droite, puis interpolation vers la palette rouge |
 | `scene3` | 36 s | **font1** : les quatre polices (BIOS 8×8, Bank 8×8/8×16/16×16), 6 sous-écrans de 6 s |
@@ -162,7 +162,7 @@ demo.exe
 ├── s3m.h/c           Lecteur de modules S3M (Scream Tracker 3)
 ├── wav.h/c           Mixeur d'effets sonores WAV
 ├── audio.h/c         API audio de haut niveau (playMusic, playSound, fondus)
-│   └── audios/       TESTMUS3.S3M — module joué par scene8
+│   └── audios/       musique.s3m — module joué par scene8
 ├── images/           freedos.raw/.pal (scene6) + palettes .pal ci-dessus
 ├── scene.h/c         Gestionnaire de scènes — callbacks onSceneEnd
 └── scenes/           scene0.c … scene8.c — application de démonstration
