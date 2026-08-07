@@ -13,6 +13,7 @@ void scene4(void);
 void scene5(void);
 void scene6(void);
 void scene7(void);
+void scene8(void);
 
 Scene currentScene = SCENE_0;
 unsigned long sceneStart = 0;
@@ -29,6 +30,7 @@ static SceneFunc scenes[] = {
     scene5,
     scene6,
     scene7,
+    scene8,
 };
 
 void setScene(Scene s)

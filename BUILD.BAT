@@ -11,6 +11,10 @@ wcc -ml -0 -os -I. font1\f1_8x8.c > f1_8x8.out
 wcc -ml -0 -os -I. font1\f1_8x16.c > f1_8x16.out
 wcc -ml -0 -os -I. font1\f1_16x16.c > f1_16x16.out
 wcc -ml -0 -os -I. font2.c > font2.out
+wcc -ml -0 -os -I. sblaster.c > sblaster.out
+wcc -ml -0 -os -I. s3m.c > s3m.out
+wcc -ml -0 -os -I. wav.c > wav.out
+wcc -ml -0 -os -I. audio.c > audio.out
 wcc -ml -0 -os -I. scene.c > scene.out
 wcc -ml -0 -os -I. scenes\scene0.c > scene0.out
 wcc -ml -0 -os -I. scenes\scene1.c > scene1.out
@@ -20,4 +24,5 @@ wcc -ml -0 -os -I. scenes\scene4.c > scene4.out
 wcc -ml -0 -os -I. scenes\scene5.c > scene5.out
 wcc -ml -0 -os -I. scenes\scene6.c > scene6.out
 wcc -ml -0 -os -I. scenes\scene7.c > scene7.out
+wcc -ml -0 -os -I. scenes\scene8.c > scene8.out
 wlink @LINK.RSP > link.out

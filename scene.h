@@ -14,6 +14,7 @@ typedef enum {
     SCENE_5  = 5,
     SCENE_6  = 6,
     SCENE_7  = 7,
+    SCENE_8  = 8,
 } Scene;
 
 extern Scene currentScene;
