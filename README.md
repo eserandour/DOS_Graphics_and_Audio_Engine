@@ -2,8 +2,6 @@
 
 *Dernière version : 07/08/2026 à 15h15*
 
-![font1Bios 8x8](<font1/Capture%20du%202026-08-05%2016-53-48.png>)
-
 Un **moteur graphique et audio** en C89 pur pour **FreeDOS**, compilé avec
 **Open Watcom 1.9**, sans aucune dépendance externe au runtime : mode vidéo
 **VGA 13h** (320×200, 256 couleurs) piloté directement via les ports,
