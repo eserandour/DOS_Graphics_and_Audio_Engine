@@ -1,4 +1,4 @@
-# Moteur graphique (mode 13h) et audio pour FreeDOS
+# Moteur graphique et audio pour FreeDOS 1.4
 
 *Dernière version : 07/08/2026 à 15h15*
 
