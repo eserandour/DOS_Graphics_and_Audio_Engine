@@ -40,19 +40,16 @@ void shutdown(void)
    ========================================================= */
 
 static const Scene playlist[] = {
-    SCENE_8,
-    SCENE_0,  /* 5 secondes d'écran noir (pour la capture vidéo) */
-    SCENE_11, /* 6 waveforms */
-    SCENE_1,  /* Tout ce qui tremble peut écrire */
-    SCENE_2,  /* plasma */
-    SCENE_3,  /* Cercles */
-    SCENE_7,  /* écrire */
-    SCENE_5,  /* Champ d'étoiles */
-    SCENE_4,  /* Paysage fil de fer */
-    SCENE_14, /* Labyrinthe avec ponctuation */
-    SCENE_6,  /* 3 secondes écran noir */
-    SCENE_13, /* ÉRIC SÉRANDOUR JUIN 2026 */
-    SCENE_0,  /* 5 secondes d'écran noir (pour la capture vidéo) */
+    SCENE_0,  /* 1 seconde d'écran noir (pour la capture vidéo) */
+    SCENE_1,  /* pixels aléatoires (LCG)                        */
+    SCENE_2,  /* démonstration palette VGA                      */
+    SCENE_3,  /* démonstration des polices font1                */
+    SCENE_4,  /* affichage "HELLO" / "WORLD" avec font2         */
+    SCENE_5,  /* scrolling de texte                             */
+    SCENE_6,  /* rotozoom freedos                               */
+    SCENE_7,  /* démonstration primitives graphics              */
+    SCENE_8,  /* démonstration audio                            */
+    SCENE_0,  /* 1 seconde d'écran noir (pour la capture vidéo) */
 };
 #define PLAYLIST_LEN (sizeof(playlist) / sizeof(playlist[0]))
 
