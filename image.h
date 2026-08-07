@@ -15,7 +15,7 @@
    Chaque appel ouvre le fichier, lit les pixels, les copie
    dans le backbuffer, puis ferme le fichier. C'est donc un
    acces disque a chaque appel -- a reserver aux images
-   affichees une seule fois (fond de scene, ecran titre).
+   affichees une seule fois (arriere-plan fixe, ecran titre).
 
    Pour les assets affiches frame apres frame (sprites,
    polices bitmap), utiliser sprite.h qui precharge les

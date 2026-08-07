@@ -16,7 +16,7 @@
    L'IRQ Sound Blaster se contente de lever un drapeau ; le
    mixage logiciel (musique S3M + sons WAV) est fait par
    audioUpdate(), appelée depuis la boucle principale de main.c
-   (voir "while (!quitRequested) { runCurrentScene(); audioUpdate(); }").
+   (voir "while (!quitRequested) { ...; audioUpdate(); }").
 
    Le mixage a délibérément été laissé HORS de l'ISR : du code
    qui s'exécute dans une interruption bloque TOUTES les autres
@@ -137,9 +137,9 @@ int isMusicPlaying(void);
 /* Retourne 1 si la musique en cours a rebouclé sur son point de
    départ depuis le dernier appel à cette fonction, puis remet le
    drapeau à 0 ; retourne 0 sinon (y compris si aucune musique n'est
-   chargée ou si le moteur audio est inactif). Permet de synchroniser
-   une transition de scène sur la musique elle-même plutôt que sur
-   une durée estimée à la main (voir scene8.c). */
+   chargée ou si le moteur audio est inactif). Permet à l'appelant
+   de synchroniser un événement sur la musique elle-même plutôt
+   que sur une durée estimée à la main. */
 int hasMusicLooped(void);
 
 /* Fait monter la musique en cours de son niveau actuel (typiquement

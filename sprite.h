@@ -25,8 +25,7 @@
    320×200 = 64 000 octets tient juste. Au-delà (ex. feuille
    de 320×256 = 81 920 o), utiliser spriteLoadSplit qui
    découpe en N blocs de 32 768 octets max chacun (jusqu'à
-   SPR_SPLIT_MAX_BLK blocs, voir SPR_SPLIT_MAX), sur le même
-   principe que le split manuel de scene6.c pour tex0/tex1.
+   SPR_SPLIT_MAX_BLK blocs, voir SPR_SPLIT_MAX).
 
    Les sprites dont w*h <= 65 535 utilisent spriteLoad.
    Au-delà, spriteLoadSplit (voir section dédiée plus bas).

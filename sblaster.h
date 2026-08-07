@@ -9,8 +9,9 @@
    Ce module ne connait ni le S3M ni le WAV : il sait
    uniquement dialoguer avec le DSP Sound Blaster (reset,
    version, constante de temps, volume mixer) et avec le
-   contrôleur DMA 8237 (canal 8 bits, transfert simple-cycle
-   déclenché à la main à chaque IRQ — voir audio.c).
+   contrôleur DMA 8237 (canal 8 bits, mode auto-init en
+   boucle, programmé une seule fois, sans réarmement à
+   chaque IRQ — voir sbStartOutputLoop() plus bas et audio.c).
 
    DÉTECTION
    ---------

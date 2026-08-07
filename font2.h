@@ -12,7 +12,7 @@
    Les glyphes sont stockes dans une feuille de sprites .raw,
    organisee en grille reguliere. La police est decrite par
    une structure Font2Desc, ce qui permet d'utiliser plusieurs
-   polices differentes selon les scenes.
+   polices differentes selon les besoins de l'appelant.
 
    UTILISATION
    -----------
@@ -29,7 +29,7 @@
         font2DrawText(&myFont, "SCORE 1000", 10, 84);
         font2DrawChar(&myFont, 'A', 160, 84);
 
-   4) Liberer en fin de scene :
+   4) Liberer quand la police n'est plus utile :
 
         font2Free(&myFont);
 

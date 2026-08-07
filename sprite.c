@@ -315,9 +315,10 @@ void spriteBlitFrameKey(const Sprite *spr, int frameIndex,
 /* =========================================================
    SPRITE SPLIT  (w*h > 65 535, max SPR_SPLIT_MAX octets)
    =========================================================
-   Généralisation du split manuel de scene6.c (tex0/tex1) à
-   N blocs de SPR_SPLIT_BLOCK (32768) octets max chacun.
-   Le dernier bloc peut être plus petit (taille restante).
+   Split générique en N blocs de SPR_SPLIT_BLOCK (32768)
+   octets max chacun, pour les sprites/feuilles dépassant la
+   limite _fmalloc de 65 535 octets. Le dernier bloc peut
+   être plus petit (taille restante).
 
    blk[i] contient les octets i*32768 .. min((i+1)*32768,
    w*h) - 1. nBlk = nombre de blocs réellement alloués.
