@@ -39,6 +39,7 @@
 #include "font1.h"
 #include "scene.h"
 #include "audio.h"
+#include "palette.h"
 
 #define FADE_MS     6000UL   /* durée de chaque fondu 3000 à l'origine*/
 #define PLAY_MS     16000UL   /* palier plein volume entre les deux fondus */
@@ -109,6 +110,17 @@ void scene8(void)
         lastDrawMs  = 0;
 
         font1InitBios();
+
+        /* Cette scene affiche du texte avec des indices de couleur fixes
+           (15, 14, 8, 7, 4) en supposant la palette VGA par defaut.
+           Sans ce reset, un passage precedent par une scene qui modifie
+           la palette (ex : scene7, qui termine sur un fondu au noir de
+           rainbowPalette) laisse le DAC dans un etat quasi noir : le
+           texte serait alors dessine avec les bons indices, mais ces
+           indices pointeraient vers des teintes invisibles. Vu au
+           deuxieme passage sur scene8 dans la playlist bouclee. */
+        copyPalette(workingPalette, defaultPalette);
+        setPalette(workingPalette);
 
         loadStatus = playMusic("audios\\musique.s3m");
 
