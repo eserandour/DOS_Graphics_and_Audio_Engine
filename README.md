@@ -189,7 +189,7 @@ autonome, non nécessaires pour compiler ou exécuter la démo :
 
 `DUMPPAL.C` se compile avec Open Watcom, comme le reste du projet ;
 `gen_palettes.py`, `s3mcheck.py` et les scripts de `fonts/` s'exécutent
-avec Python 3 sur la machine de développement (pas sous FreeDOS).
+avec Python 3 sur la machine de développement (pas sous DOS).
 
 ---
 
