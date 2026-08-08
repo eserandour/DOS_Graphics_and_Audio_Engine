@@ -54,7 +54,7 @@
 
 /* Scroller horizontal */
 #define HSCROLL_TEXT \
-    "     DEMO DOS     MODE 13H     OPEN WATCOM 1.9     FREEDOS 1.4"
+    "     DEMO DOS     MODE 13H     OPEN WATCOM 1.9     "
 
 /* Lignes du générique vertical.
    Chaîne unique, lignes séparées par '\n'.
@@ -66,8 +66,6 @@ static const char *vlines[] = {
     "MODE 13H",
     "",
     "OPEN WATCOM 1.9",
-    "",
-    "FREEDOS 1.4",
     "",
 };
 #define VLINES_COUNT  ((int)(sizeof(vlines) / sizeof(vlines[0])))
