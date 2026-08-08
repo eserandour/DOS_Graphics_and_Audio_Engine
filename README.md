@@ -24,13 +24,12 @@ rotozoom, primitives 2D, et lecture audio S3M.
 | Outil | Version testée |
 |---|---|
 | [Open Watcom](https://github.com/open-watcom/open-watcom-v2) | 1.9 |
-| [FreeDOS](https://www.freedos.org/) | 1.4 |
 | DOSBox-X | 2025.02.01 (Linux SDL2 64-bit) |
 | Python (outils uniquement) | 3.x |
 | Carte **Sound Blaster** (ou compatible) | facultative — voir [Moteur audio](#moteur-audio) |
 
 La compilation se fait **sous DOS** (ou un émulateur DOS tel que
-DOSBox/VirtualBox) avec `wcc` et `wlink` disponibles dans le `PATH`.
+DOSBox-X/VirtualBox) avec `wcc` et `wlink` disponibles dans le `PATH`.
 
 ---
 

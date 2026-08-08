@@ -1,7 +1,7 @@
 /* =========================================================
    MAIN.C — Point d'entrée et arrêt propre
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode vidéo    : 13h (320x200, 256 couleurs)
 
    Échap est détecté par un handler INT 09h installé dans

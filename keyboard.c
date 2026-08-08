@@ -1,7 +1,7 @@
 /* =========================================================
    KEYBOARD.C — Handler clavier bas niveau (INT 09h)
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
 
    Détecte uniquement la touche Échap (scan code 0x01) et
    lève quitRequested. L'EOI est envoyé au PIC directement ;

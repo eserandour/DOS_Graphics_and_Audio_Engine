@@ -4,7 +4,7 @@
 /* =========================================================
    AUDIO.H — Moteur audio (musique S3M + effets WAV)
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Carte         : Sound Blaster (ou compatible) détectée
                    via la variable d'environnement BLASTER.
 

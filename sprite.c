@@ -1,7 +1,7 @@
 /* =========================================================
    SPRITE.C — Sprites préchargés en far heap, mode 13h
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode vidéo    : 13h (320x200, 256 couleurs, 1 octet/pixel)
 
    Voir sprite.h pour la documentation complète de l'API,

@@ -4,13 +4,13 @@
 /* =========================================================
    SPRITE.H — Sprites préchargés en far heap, mode 13h
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode vidéo    : 13h (320x200, 256 couleurs, 1 octet/pixel)
 
    PRINCIPE
    --------
    image.c charge les pixels depuis le disque à chaque blit.
-   Sur FreeDOS avec un accès disque lent (disquette, FAT12),
+   Sous DOS, avec un accès disque lent (disquette, FAT12),
    un fread() par frame crée un goulot d'étranglement visible.
 
    Ce module charge le .raw UNE SEULE FOIS en far heap au

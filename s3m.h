@@ -4,7 +4,7 @@
 /* =========================================================
    S3M.H — Chargeur et moteur de lecture de modules S3M
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
 
    SOUS-ENSEMBLE SUPPORTÉ (volontairement limité — voir
    STRUCT.TXT / notes de audio.c pour le détail complet) :

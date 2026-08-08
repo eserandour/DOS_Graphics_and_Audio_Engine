@@ -1,7 +1,7 @@
 /* =========================================================
    FONT2.C — Affichage de texte par feuille de sprites
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode video    : 13h (320x200, 256 couleurs, 1 octet/pixel)
 
    ATTENTION — arithmetique 16 bits

@@ -4,7 +4,7 @@
 /* =========================================================
    WAV.H — Chargement et mixage de sons WAV (effets sonores)
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
 
    PRINCIPE
    --------

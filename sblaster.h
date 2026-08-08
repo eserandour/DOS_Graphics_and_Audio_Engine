@@ -4,7 +4,7 @@
 /* =========================================================
    SBLASTER.H — Pilote bas niveau Sound Blaster (DSP + DMA)
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
 
    Ce module ne connait ni le S3M ni le WAV : il sait
    uniquement dialoguer avec le DSP Sound Blaster (reset,

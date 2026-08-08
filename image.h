@@ -4,7 +4,7 @@
 /* =========================================================
    IMAGE.H -- Chargement one-shot d'images RAW/PAL en mode 13h
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode video    : 13h (320x200, 256 couleurs, 1 octet/pixel)
 
    PRINCIPE
