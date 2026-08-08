@@ -2,7 +2,7 @@
 
 *Dernière version : 07/08/2026 à 17h15*
 
-Un **moteur graphique et audio** en C89 pur pour **FreeDOS**, compilé avec
+Un **moteur graphique et audio** en C89 pur pour **DOS**, compilé avec
 **Open Watcom 1.9**, sans aucune dépendance externe au runtime : mode vidéo
 **VGA 13h** (320×200, 256 couleurs) piloté directement via les ports,
 timer et clavier gérés par interruptions matérielles, musique **S3M** et
@@ -13,7 +13,7 @@ Le dépôt inclut neuf **scènes de démonstration** (`scenes/scene0.c` à
 palette VGA, polices bitmap, texte par feuille de sprites, scrollers,
 rotozoom, primitives 2D, et lecture audio S3M.
 
-> **A graphics and audio engine in C for FreeDOS / Open Watcom 1.9.**
+> **A graphics and audio engine in C for DOS / Open Watcom 1.9.**
 > VGA mode 13h (320×200, 256 colours) and Sound Blaster S3M/WAV playback,
 > with nine demo scenes showcasing each module of the engine.
 
@@ -28,7 +28,7 @@ rotozoom, primitives 2D, et lecture audio S3M.
 | Python (outils uniquement) | 3.x |
 | Carte **Sound Blaster** (ou compatible) | facultative — voir [Moteur audio](#moteur-audio) |
 
-La compilation se fait **sous FreeDOS** (ou un émulateur DOS tel que
+La compilation se fait **sous DOS** (ou un émulateur DOS tel que
 DOSBox/VirtualBox) avec `wcc` et `wlink` disponibles dans le `PATH`.
 
 ---
