@@ -1,6 +1,6 @@
 # Moteur graphique et audio pour démos ou projets plus littéraires (Compilateur : Open Watcom 1.9 sous DOS)
 
-*Dernière version : 08/08/2026 à 20h14*
+*Dernière version : 07/08/2026 à 17h15*
 
 Un **moteur graphique et audio** en C89 pur pour **DOS**, compilé avec
 **Open Watcom 1.9**, sans aucune dépendance externe au runtime : mode vidéo
@@ -18,6 +18,8 @@ rotozoom, primitives 2D, et lecture audio S3M.
 > with nine demo scenes showcasing each module of the engine.
 
 ---
+
+![Description de l'image](images/captures/capture1.png)
 
 ## Prérequis
 
