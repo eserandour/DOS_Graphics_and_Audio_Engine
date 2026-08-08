@@ -7,7 +7,7 @@
    Environnement : Open Watcom 1.9, DOS
 
    SOUS-ENSEMBLE SUPPORTÉ (volontairement limité — voir
-   STRUCT.TXT / notes de audio.c pour le détail complet) :
+   les notes de audio.c pour le détail complet) :
      - Échantillons PCM non compressés, 8 ou 16 bits, mono
        ou stéréo (convertis au chargement en 8 bits non
        signés mono, format natif du moteur de mixage).
