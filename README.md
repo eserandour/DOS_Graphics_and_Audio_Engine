@@ -1,4 +1,4 @@
-# Moteur graphique et audio pour DEMO (Compilateur : Open Watcom 1.9 sous DOS)
+# Moteur graphique et audio pour DEMO ou projets plus littéraires (Compilateur : Open Watcom 1.9 sous DOS)
 
 *Dernière version : 07/08/2026 à 17h15*
 
