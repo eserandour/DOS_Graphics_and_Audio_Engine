@@ -183,8 +183,11 @@ int wavPlay(const char *filename)
                 int lo, hi, s16;
                 lo  = nearBuf[k * frameBytes];
                 hi  = nearBuf[k * frameBytes + 1];
+                /* (unsigned int)->(int) reinterprete deja le motif binaire
+                   en complement a deux : s16 est signe correctement des
+                   cette conversion (int fait 16 bits en cible DOS), pas
+                   besoin d'un test manuel de depassement ensuite. */
                 s16 = (int)((unsigned int)lo | ((unsigned int)hi << 8));
-                if (s16 >= 32768) s16 -= 65536;
                 v = (s16 >> 8) + 128;
                 if (channelsIn == 2)
                 {
@@ -192,7 +195,6 @@ int wavPlay(const char *filename)
                     lo2  = nearBuf[k * frameBytes + 2];
                     hi2  = nearBuf[k * frameBytes + 3];
                     s16b = (int)((unsigned int)lo2 | ((unsigned int)hi2 << 8));
-                    if (s16b >= 32768) s16b -= 65536;
                     v2 = (s16b >> 8) + 128;
                     v  = (v + v2) / 2;
                 }
