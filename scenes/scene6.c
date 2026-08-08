@@ -1,7 +1,7 @@
 /* =========================================================
    SCENE6.C — Rotozoom sur l'image freedos (256x256)
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode video    : 13h (320x200, 256 couleurs)
 
    PRINCIPE

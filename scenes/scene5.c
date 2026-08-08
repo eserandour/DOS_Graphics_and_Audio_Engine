@@ -1,7 +1,7 @@
 /* =========================================================
    SCENE5.C — Scrolling horizontal puis scrolling vertical
    =========================================================
-   Environnement : Open Watcom 1.9, FreeDOS 1.4
+   Environnement : Open Watcom 1.9, DOS
    Mode video    : 13h (320x200, 256 couleurs)
 
    La scène se déroule en deux parties enchaînées :

@@ -18,7 +18,7 @@
 
    Fade in 1 s / fade out 1 s sur la durée totale.
    Aucune gestion clavier (sauf Échap global via INT 09h).
-   Cible : Open Watcom 1.9, FreeDOS, mode 13h (320x200).
+   Cible : Open Watcom 1.9, DOS, mode 13h (320x200).
    ========================================================= */
 
 #include <math.h>       /* sin, cos, fabs, sqrt            */
