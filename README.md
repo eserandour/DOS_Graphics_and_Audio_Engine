@@ -49,7 +49,6 @@ Pour nettoyer les fichiers intermédiaires :
 ```bat
 CLEAN.BAT       :: supprime les .obj, .out et .err
 CLEANALL.BAT    :: supprime aussi les .exe
-KILLDEMO.BAT    :: remonte d'un niveau et supprime tout le dossier demo/
 ```
 
 ---
