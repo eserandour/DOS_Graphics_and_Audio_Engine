@@ -19,7 +19,7 @@ rotozoom, primitives 2D, et lecture audio S3M.
 
 ---
 
-![Capture écran](captures/capture1.png)
+![Capture écran](CAPTURES/demo_009.png)
 
 ---
 
