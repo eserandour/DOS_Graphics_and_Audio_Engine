@@ -200,6 +200,8 @@ que tout travail dérivé soit également publié sous GPL-3.0.
 
 Voir le fichier [`LICENSE`](LICENSE) pour le texte complet.
 
+---
+
 ## Version 32 bits
 
 Si les limites du modèle mémoire **16 bits / FAR** deviennent contraignantes, une version **32 bits** du moteur est également disponible :
