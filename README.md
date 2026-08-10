@@ -1,4 +1,4 @@
-# Moteur graphique et audio pour démos ou projets plus littéraires (Compilateur : Open Watcom 1.9 sous DOS)
+# DOS Graphics & Audio Engine (16 bits)
 
 *Dernière version : 08/08/2026 à 23h42*
 
